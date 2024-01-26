@@ -1,0 +1,10 @@
+(executable
+  (name function_call)
+  (libraries compiler-libs.common)
+)
+
+(env
+  (dev
+    (flags (:standard -warn-error -a)))
+)
+
