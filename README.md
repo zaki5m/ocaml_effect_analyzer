@@ -1,1 +1,3 @@
 # ocaml_effect_analyzer
+
+OCamlのソースコードからエフェクトの列を導出する解析器

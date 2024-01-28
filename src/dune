@@ -1,0 +1,17 @@
+(executable
+  (name main)
+  (modules main)
+  (libraries compiler-libs.common effect_analyzer.function_call)
+)
+
+(library
+ (name function_call)
+ (modules function_call effect_analyzer_core efname_formatter)
+ (public_name effect_analyzer.function_call)
+ (libraries compiler-libs.common))
+
+(env
+  (dev
+    (flags (:standard -warn-error -a)))
+)
+
