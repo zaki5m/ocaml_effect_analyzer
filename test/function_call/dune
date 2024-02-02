@@ -1,5 +1,5 @@
 (tests
-  (names test1 test2)
+  (names test1 test2 test3)
   (libraries function_call compiler-libs.common)
 )
 
