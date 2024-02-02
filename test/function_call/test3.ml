@@ -8,4 +8,6 @@ let function_call_test =
   assert (first = ("sum_up", [[EffectName "Increment"]]));
   let second = List.hd (List.tl result) in
   assert (second = ("main", [[FunctionName ("sum_up",[Effc [("_", []); ("Increment", [[FunctionName ("continue", [])]])]; Exnc [("_", [[FunctionName ("raise", [])]])]; Retc [[FunctionName ("unknown", [])]]])]]));
+  let third = List.hd (List.tl (List.tl result)) in
+  assert (third = ("_", [[FunctionName ("main", [])]]));
   print_endline "function_call_test <test3> passed"

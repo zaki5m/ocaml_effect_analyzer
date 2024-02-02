@@ -259,9 +259,13 @@ let rec find_perform_expr_in_structure_item item =
   | Pstr_value (_, value_bindings) ->
     Printf.printf "Pstr_value found\n";
     (* 'let' 式をトラバース *)
-    let function_name = (match value_bindings with
-        | { pvb_pat = { ppat_desc = Ppat_var { txt = function_name; _ }; _ }; _ } :: _ -> function_name
-        | _ -> "unknown") in
+    let function_name = match value_bindings with 
+     | [] -> "unknown"
+     | head :: _ -> match head.pvb_pat.ppat_desc with 
+        | Ppat_any -> "_"
+        | Ppat_var { txt = function_name; _ } -> function_name
+        | _ -> "unknown"
+    in
     let perform_lst = List.fold_left (fun lst vb -> (find_perform_in_expr Other vb.pvb_expr [] []) @ lst) [] value_bindings in 
     Some (function_name, perform_lst)
   | _ -> None
