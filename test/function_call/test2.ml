@@ -11,5 +11,5 @@ let function_call_test =
   let third = List.hd (List.tl (List.tl result)) in
   assert (third = ("mul", [[FunctionName ("*",[])]]));
   let fourth = List.hd (List.tl (List.tl (List.tl result))) in
-  assert (fourth = ("main", [[FunctionName ("sub",[]); FunctionName ("add",[]); FunctionName ("mul",[])]]));
+  assert (fourth = ("main", [[FunctionName ("sub",[]); FunctionName ("mul",[]); FunctionName ("add",[])]]));
   print_endline "function_call_test <test2> passed"

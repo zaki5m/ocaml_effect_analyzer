@@ -51,7 +51,7 @@ let rec find_perform_in_expr ?(is_perform_name = false) is_patern_search expr (p
     (* 'perform' を使う式を見つけた場合 未完成*)
     Printf.printf "perform foundC: %s\n" (Pprintast.string_of_expression expr);
     Printf.printf "args: %s\n" (Pprintast.string_of_expression (List.nth _args 0 |> snd));
-    let new_perform_lst = List.map (fun (_, expr) -> find_perform_in_expr is_patern_search expr [] ~is_perform_name:true local_var_lst) _args |> List.flatten in
+    let new_perform_lst = List.map (fun (_, expr) -> find_perform_in_expr is_patern_search expr [] ~is_perform_name:true local_var_lst) (List.rev _args) |> List.flatten in
     (* Printf.printf "perform_name: %s\n" perform_name; *)
     new_perform_lst
   | Pexp_apply (expr1, args) ->
@@ -66,13 +66,13 @@ let rec find_perform_in_expr ?(is_perform_name = false) is_patern_search expr (p
     if (function_name_is_handler expr1) then 
       let (tmp_args, handler_record) = convert_match_with args in (* ToDo: 高階関数の場合はこの辺りでバグる可能性あり *) (* 現在はhandlerの部分を未処理 *)
       let tmp_perform_lst = List.fold_left (fun lst expr -> (find_perform_in_expr is_patern_search expr [] local_var_lst) @ lst ) [] tmp_args in 
-      let tmp_func_name = extract_function_name (List.hd tmp_args) in
+      let tmp_func_name = extract_function_name (List.hd tmp_args) in (* argsの中で関数適用があった場合を未処理 *)
       let handler = analyze_handler handler_record local_var_lst in
       let tmp_perform_lst = perform_lst_append [[(FunctionName (tmp_func_name, handler))]] tmp_perform_lst in
       let new_perform_lst = perform_lst_append tmp_perform_lst perform_lst in
       new_perform_lst
     else
-      let tmp_perform_lst = List.fold_left (fun lst (_, expr) -> (find_perform_in_expr is_patern_search expr lst local_var_lst) ) [] args in
+      let tmp_perform_lst = List.fold_left (fun lst (_, expr) -> (find_perform_in_expr is_patern_search expr lst local_var_lst) ) [] (List.rev args) in
       let tmp_perform_lst = perform_lst_append [[(FunctionName (func_name, []))]] tmp_perform_lst in
       let new_perform_lst = perform_lst_append tmp_perform_lst perform_lst in
       Printf.printf "--------perform len: %d--------\n"  (List.length new_perform_lst);
