@@ -8,6 +8,7 @@ open Longident
 open Effect_analyzer_core
 open Efname_formatter
 open Function_call_util
+open EfName_to_effect_row
 
 (* 式内で 'perform' を探す *)
 (* is_patern_searchはハンドラのパターンをトラバースするときに使う *)
@@ -307,5 +308,17 @@ let parse_test_ocaml_file filename =
   let result = List.map (fun item -> find_perform_expr_in_structure_item item) ast in
   let result = List.filter_map (fun item -> item) result in
   result
-  
 
+let effect_row_test filename = 
+  let parsed_file = parse_test_ocaml_file filename in 
+  let result = analyze_function_call [] (parsed_file) in
+  result 
+
+let main () =
+  let parsed_file = parse_test_ocaml_file Sys.argv.(1) in 
+  let result = analyze_function_call [] (parsed_file) in
+  List.iter (fun (function_name, perform_lst) ->
+        Printf.printf "function_name: %s\n" function_name;
+        (* Printf.printf "perform_lst len: %d\n" (List.length perform_lst); *)
+        List.iter (fun lst -> efName_list_to_string lst |> print_endline) perform_lst;) result;
+  ()

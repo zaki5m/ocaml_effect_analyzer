@@ -1,0 +1,9 @@
+(tests
+  (names test1 test2 test3)
+  (libraries function_call compiler-libs.common)
+)
+
+(env
+  (dev
+    (flags (:standard -warn-error -a)))
+)
