@@ -227,17 +227,16 @@ and analyze_handler handler_record local_var_lst = match handler_record.pexp_des
   Printf.printf "name1: %s\n" name1;
   let lst1 = find_perform_in_expr (pattern_type_of_string name1) field1 [] local_var_lst in
   let effect_handler = efNameOfHandler_list_from_efName_list (List.hd lst1) Effect in
-  (* List.iter (fun lst -> efName_list_to_string lst |> print_endline) lst1; *)
   let name2 = extract_ident_from_construct name2 in
   Printf.printf "name2: %s\n" name2;
   let lst2 = find_perform_in_expr (pattern_type_of_string name2) field2 [] local_var_lst in
-  let exception_handler = efNameOfHandler_list_from_efName_list (List.hd lst2) Exception in
-  List.iter (fun lst -> efName_list_to_string lst |> print_endline) lst2;
+  let lst2 = if (List.length lst2 = 0) then [] else (List.hd lst2) in
+  let exception_handler = efNameOfHandler_list_from_efName_list lst2 Exception in
   let name3 = extract_ident_from_construct name3 in
   Printf.printf "name3: %s\n" name3;
   let lst3 = find_perform_in_expr (pattern_type_of_string name3) field3 [] local_var_lst in
-  let other_handler = efNameOfHandler_list_from_efName_list (List.hd lst3) Other in
-  List.iter (fun lst -> efName_list_to_string lst |> print_endline) lst3;
+  let lst3 = if (List.length lst3 = 0) then [] else (List.hd lst3) in
+  let other_handler = efNameOfHandler_list_from_efName_list lst3 Other in
   let handler = effect_handler @ exception_handler @ other_handler in
   Printf.printf "handler len: %d\n" (List.length handler);
   handler
