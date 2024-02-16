@@ -5,7 +5,7 @@ open Efname_formatter
 let rec handler_lst_analyze lst effect_lst exception_lst ret_lst = match lst with
   | [] -> (effect_lst, exception_lst, ret_lst)
   | hd :: tl -> (match hd with
-    | Effc effect_lst -> Printf.printf "eff\n"; handler_lst_analyze tl effect_lst exception_lst ret_lst
+    | Effc effect_lst -> handler_lst_analyze tl effect_lst exception_lst ret_lst
     | Exnc exception_lst -> handler_lst_analyze tl effect_lst exception_lst ret_lst
     | Retc ret_lst -> handler_lst_analyze tl effect_lst exception_lst ret_lst)
 
@@ -16,7 +16,6 @@ let any_exist_wildcard effect_lst =
   | None -> []
 
 (* continueしたときにhandlerが定義されていた場合は現在動作不能 *)
-(* 今の実装では逆 *)
 let rec efName_lst_opt_continue lst = match lst with
   | [] -> None
   | hd :: tl -> (match hd with
@@ -50,8 +49,6 @@ let analyze_handler (lst: efName list) (handler: efNameOfHandler list) =
     | [] -> ([], confirm_lst)
     | hd :: tl -> (match hd with
       | EffectName name -> 
-        Printf.printf "name: %s\n" name;
-        Printf.printf "effect_lst: %d\n" (List.length effect_lst);
         let result = List.find_opt (fun (tmp_name, _) -> name = tmp_name) effect_lst in
         let (not_confirm_lst, new_confirm_lst) = 
           (match result with
@@ -146,7 +143,4 @@ let rec analyze_function_call exp_lst (lst: (string * efName list list) list) = 
   | (name, lst) :: tl -> 
     Printf.printf "function_name: %s\n" name;
     let new_exp_lst = (name, analyze_eflst exp_lst lst) in
-    (* let (aa, bb) = new_exp_lst in
-    Printf.printf "function_name: %s\n" name;
-    Printf.printf "new_exp_lst: %s\n" (List.fold_left (fun a b -> a ^ efName_list_to_string b) "" bb); *)
     new_exp_lst ::analyze_function_call (new_exp_lst::exp_lst) tl

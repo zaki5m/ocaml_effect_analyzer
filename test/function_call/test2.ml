@@ -5,11 +5,11 @@ let function_call_test =
   let result = parse_test_ocaml_file file in
   assert (List.length result = 4);
   let first = List.hd result in
-  assert (first = ("add", [[FunctionName ("+",[])]]));
+  assert (first = (("add", 2), [[FunctionName ("+",[])]]));
   let second = List.hd (List.tl result) in
-  assert (second = ("sub", [[FunctionName ("-",[])]]));
+  assert (second = (("sub", 2), [[FunctionName ("-",[])]]));
   let third = List.hd (List.tl (List.tl result)) in
-  assert (third = ("mul", [[FunctionName ("*",[])]]));
+  assert (third = (("mul", 2), [[FunctionName ("*",[])]]));
   let fourth = List.hd (List.tl (List.tl (List.tl result))) in
-  assert (fourth = ("main", [[FunctionName ("sub",[]); FunctionName ("mul",[]); FunctionName ("add",[])]]));
+  assert (fourth = (("main", 0), [[FunctionName ("sub",[]); FunctionName ("mul",[]); FunctionName ("add",[])]]));
   print_endline "function_call_test <test2> passed"

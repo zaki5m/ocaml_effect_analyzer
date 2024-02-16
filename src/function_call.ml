@@ -4,6 +4,7 @@ open Ast_helper
 open Ast_mapper
 open Parsetree
 open Longident
+open Compile_common
 
 open Effect_analyzer_core
 open Efname_formatter
@@ -23,6 +24,7 @@ let rec find_perform_in_expr ?(is_perform_name = false) is_patern_search expr (p
   | Pexp_let (_, vb_list, expr1) ->
     (* 'let' 式の場合は本体をトラバースする *)
     Printf.printf "let found: %s\n" (Pprintast.string_of_expression expr);
+    Printf.printf "vb_list len: %d\n" (List.length vb_list);
     (* vbを走査 *)
     let tmp_perform_lst = List.fold_left (fun lst vb -> find_perform_in_value_binding is_patern_search vb lst local_var_lst) [] vb_list in
     Printf.printf "--------let len: %d--------\n"  (List.length tmp_perform_lst);
@@ -189,6 +191,7 @@ and find_perform_in_case is_patern_search case perform_lst local_var_lst :(strin
   let tmp_perform_lst = List.map (fun name -> (name, find_perform_in_expr Other case.pc_rhs [] local_var_lst)) pattern_lst in
   tmp_perform_lst
 and find_perform_in_value_binding is_patern_search vb perform_lst local_var_lst =
+  Printf.printf "find_perform_in_value_binding is_patern_search: %s\n" (Pprintast.string_of_expression vb.pvb_expr);
   (* パターンは今は未対応 *)
   let new_perfor_lst = find_perform_in_expr is_patern_search vb.pvb_expr perform_lst local_var_lst in
   new_perfor_lst
@@ -259,22 +262,36 @@ let rec find_perform_expr_in_structure_item item =
   | Pstr_value (_, value_bindings) ->
     Printf.printf "Pstr_value found\n";
     (* 'let' 式をトラバース *)
-    let function_name = match value_bindings with 
-     | [] -> "unknown"
-     | head :: _ -> match head.pvb_pat.ppat_desc with 
+    let function_info = match value_bindings with 
+     | [] -> ("unknown", 0)
+     | head :: _ -> 
+       let function_name = match head.pvb_pat.ppat_desc with 
         | Ppat_any -> "_"
         | Ppat_var { txt = function_name; _ } -> function_name
         | _ -> "unknown"
+       in
+       let args_count = match head.pvb_expr.pexp_desc with
+        | Pexp_fun (_, _, _, _) ->
+          let rec count_args expr acc = match expr.pexp_desc with
+            | Pexp_fun (_, _, _, body) -> count_args body (acc + 1)
+            | _ -> acc
+          in
+          count_args head.pvb_expr 0
+        | _ -> 0
+       in
+       (function_name, args_count)
     in
     let perform_lst = List.fold_left (fun lst vb -> (find_perform_in_expr Other vb.pvb_expr [] []) @ lst) [] value_bindings in 
-    Some (function_name, perform_lst)
+    Some (function_info, perform_lst)
   | _ -> None
 
 let print_perform_expressions structure =
   let result = List.map (fun item -> find_perform_expr_in_structure_item item) structure in
   List.iter (fun item -> match item with
-      | Some (function_name, perform_lst) ->
+      | Some (function_info, perform_lst) ->
+        let (function_name, args_count) = function_info in
         Printf.printf "function_name: %s\n" function_name;
+        Printf.printf "args_count: %d\n" args_count;
         (* Printf.printf "perform_lst len: %d\n" (List.length perform_lst); *)
         List.iter (fun lst -> efName_list_to_string lst |> print_endline) perform_lst;
       | None -> ()) result;
@@ -310,14 +327,20 @@ let parse_test_ocaml_file filename =
 
 let effect_row_test filename = 
   let parsed_file = parse_test_ocaml_file filename in 
+  (* 一時的にfunction nameのみに限定 *)
+  let parsed_file = List.map (fun ((function_name, _), perform_lst) -> (function_name, perform_lst)) parsed_file in
   let result = analyze_function_call [] (parsed_file) in
   result 
 
-let main () =
+(* let main () =
   let parsed_file = parse_test_ocaml_file Sys.argv.(1) in 
   let result = analyze_function_call [] (parsed_file) in
   List.iter (fun (function_name, perform_lst) ->
         Printf.printf "function_name: %s\n" function_name;
         (* Printf.printf "perform_lst len: %d\n" (List.length perform_lst); *)
         List.iter (fun lst -> efName_list_to_string lst |> print_endline) perform_lst;) result;
+  () *)
+
+let main () =
+  parse_ocaml_file Sys.argv.(1);
   ()
