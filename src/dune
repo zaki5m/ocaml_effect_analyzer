@@ -6,7 +6,7 @@
 
 (library
  (name function_call)
- (modules function_call effect_analyzer_core efname_formatter function_call_util efName_to_effect_row)
+ (modules function_call effect_analyzer_core efname_formatter function_call_util efName_to_effect_row typedtree_formatter)
  (public_name effect_analyzer.function_call)
  (libraries compiler-libs.common))
 
