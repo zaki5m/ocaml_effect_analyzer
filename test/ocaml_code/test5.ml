@@ -21,6 +21,8 @@ let main () =
         match eff with
         | Increment s -> Some (fun (k: (c,_) continuation) -> 
                 continue k s)
+        | Decrement s -> Some (fun (k: (c,_) continuation) ->
+                continue k s)
         | _ -> None);
       exnc = (fun e -> raise e);
       retc = (fun _ -> Printf.printf "finish\n")
