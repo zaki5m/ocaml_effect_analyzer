@@ -14,7 +14,7 @@ and handlers_to_string (handlers: efNameOfHandler list) =
 and efNameTree_to_string (efName_tree: efNameTree) :string =
   match efName_tree with
   | Leaf -> ""
-  | Node (efName, efName_tree) -> efName_to_string efName ^ " -> " ^ (List.fold_left (fun before a -> before ^ efNameTree_to_string a) "" efName_tree)
+  | Node (efName, efName_tree) -> efName_to_string efName ^ " -> (" ^ (List.fold_left (fun before a -> before ^ efNameTree_to_string a) "" efName_tree) ^ ")"
 and efName_to_string (efName: efName) :string =
   match efName with
   | FunctionName (name,handler)  -> "(" ^ name ^ " , [ " ^ (handlers_to_string handler) ^ ")"

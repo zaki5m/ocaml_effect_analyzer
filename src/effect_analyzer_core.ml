@@ -13,3 +13,7 @@ and efNameTree = (* 木構造を表現するためのデータ構造 *)
 
   (* handlerが変数で与えられた際の型を定義しておく必要がある *)
 
+(* localで定義された変数(関数)に関する型 *)
+type localVar = 
+  | LocalVar of string * int * efNameTree (* 変数名(関数名), 引数の数(-1の場合は初期のbinding), その関数の中身のtree *)
+

@@ -14,7 +14,7 @@ open Typedtree_formatter
 
 (* 式内で 'perform' を探す *)
 (* is_patern_searchはハンドラのパターンをトラバースするときに使う *)
-let rec find_perform_in_expr ?(is_perform_name = false) is_patern_search expr local_var_lst :efNameTree list =
+let rec find_perform_in_expr ?(is_perform_name = false) is_patern_search expr (local_var_lst: localVar list) :efNameTree list =
   (* Printf.printf "find_perform_in_expr is_patern_search: %s\n" (Pprintast.string_of_expression expr); *)
   match expr.pexp_desc with
   | Pexp_ident { txt = Lident "perform"; _ } ->
@@ -124,15 +124,20 @@ let rec find_perform_in_expr ?(is_perform_name = false) is_patern_search expr lo
     let new_perform_lst =  find_perform_in_expr is_patern_search expr2 new_perform_lst local_var_lst in
     new_perform_lst *)
     []
-  | Pexp_ifthenelse (expr1, expr2, Some expr3) ->
+  | Pexp_ifthenelse (expr1, expr2, op_expr3) ->
     (* if式の場合は条件式とthen節とelse節をトラバースする *)
-    (* ToDo : あとで修正 *)
-    (* Printf.printf "ifthenelse found: %s\n" (Pprintast.string_of_expression expr);
-    let new_perform_lst = find_perform_in_expr is_patern_search expr1 perform_lst local_var_lst in
-    let new_perform_lst =  find_perform_in_expr is_patern_search expr2 new_perform_lst local_var_lst in
-    let new_perform_lst =  find_perform_in_expr is_patern_search expr3 new_perform_lst local_var_lst in
-    new_perform_lst *)
-    []
+    Printf.printf "ifthenelse found: %s\n" (Pprintast.string_of_expression expr);
+    let route_tree = find_perform_in_expr is_patern_search expr1 local_var_lst in
+    let if_tree =  find_perform_in_expr is_patern_search expr2 local_var_lst in
+    (match op_expr3 with
+    | None -> 
+      let new_tree_lst = append_efNameTree_list route_tree if_tree in
+      new_tree_lst
+    | Some expr3 ->
+      let else_tree =  find_perform_in_expr is_patern_search expr3 local_var_lst in
+      let if_else_tree = if_tree @ else_tree in
+      let new_tree_lst = append_efNameTree_list route_tree if_else_tree in
+      new_tree_lst)
   | Pexp_sequence (expr1, expr2) ->
     (* シーケンスの場合は式1と式2をトラバースする *)
     Printf.printf "sequence found: %s\n" (Pprintast.string_of_expression expr);
