@@ -22,13 +22,13 @@ let function_call_test =
       [Node (Empty, 
         [Node (EffectName "Increment", 
           [Node (Empty, 
-            [Node (FunctionName ("unit", []), 
+            [Node (FunctionName ("unit", [], []), 
               [Node (Empty, 
                 [Node (EffectName "Increment", 
-                  [Node (FunctionName ("unit", []), [])
+                  [Node (FunctionName ("unit", [], []), [])
                   ]);
                 Node (EffectName "Decrement", 
-                  [Node (FunctionName ("unit", []), [])
+                  [Node (FunctionName ("unit", [], []), [])
                   ])
                 ])
               ])

@@ -86,12 +86,12 @@ let rec remove_duplicate_case lst tmp_lst = match lst with
 
 (* FunctionNameの第一要素が任意の文字列ならtrueそうでなければfalseを返す関数 *)
 let is_any_function_name (function_name: string) efName = match efName with
-  | FunctionName (name, _) -> name = function_name
+  | FunctionName (name, _, _) -> name = function_name
   | _ -> false
 
 (* efNameからefNameOfHandlerのlistを返す関数 *)
 let extract_efNameOfHandler_from_efName (efName: efName) = match efName with
-  | FunctionName (_, handler) -> handler
+  | FunctionName (_, handler, _) -> handler
   | _ -> []
 
 (* efNameのlistからefNameofHandlerを返す関数 *)
@@ -134,7 +134,7 @@ let rec add_efName_tree (tree: efNameTree) (append_tree: efNameTree) = match tre
 
 (* treeのLeafまで走査して，新たなNodeを追加する関数 (appendするのがlist version) *)
 let rec add_efName_tree_list (tree: efNameTree) (append_tree: efNameTree list) = match tree with
-  | Leaf -> Node (FunctionName ("unit", []), append_tree)
+  | Leaf -> Node (FunctionName ("unit", [], []), append_tree)
   | Node (efName, []) -> Node (efName, append_tree)
   | Node (efName, lst) -> Node (efName, List.map (fun new_tree -> add_efName_tree_list new_tree append_tree) lst)
 
@@ -145,7 +145,7 @@ let rec add_efName_tree_to_leaf (tree: efNameTree) (append_tree: efNameTree) = m
 
 (* treeのLeafにのみ新たなNodeを追加する関数 (appendするのがlist version) *)
 let rec add_efName_tree_list_to_leaf (tree: efNameTree) (append_tree: efNameTree list) = match tree with
-  | Leaf -> Node (FunctionName ("unit", []), append_tree)
+  | Leaf -> Node (FunctionName ("unit", [], []), append_tree)
   | Node (efName, lst) -> Node (efName, List.map (fun new_tree -> add_efName_tree_list_to_leaf new_tree append_tree) lst)
 
 (* efNameTreeのリストを結合する関数 *)
@@ -177,3 +177,30 @@ let extract_function_name_and_arg_num_from_vb_list vb_lst = match vb_lst with
     | _ -> 0
     in
     (function_name, args_count)
+
+(* 関数名とlocal_var_lstからlocalVarを作成する関数 *)
+let create_localVar (function_name: string) (tmp_local_var_lst: localVar list) (pre_local_var_lst: localVar list) (tree: efNameTree list) = 
+  let length_diff = List.length tmp_local_var_lst - List.length pre_local_var_lst in
+  let rec loop i lst args_lst = 
+    if i = 0 then 
+      args_lst
+    else
+      match lst with
+      | [] -> args_lst
+      | head :: rest -> ( match head with 
+        | ArgsVar (_, _) -> 
+          let args_lst = head :: args_lst in
+          loop (i-1) rest args_lst
+        | _ -> args_lst
+      ) 
+  in
+  (* 引数のリストを取り出す *)
+  let args_lst = loop length_diff tmp_local_var_lst [] in
+  if args_lst = [] then
+    None
+  else
+    let local_var = LocalVar (function_name, args_lst, (Node (Empty, tree))) in
+    Some local_var
+
+
+(* パターンマッチのケースを解析する *)
