@@ -305,7 +305,8 @@ let rec find_perform_expr_in_structure_item item =
     let (tree_lst, local_var_lst) = find_perform_in_expr Other (List.hd value_bindings).pvb_expr [] in
     Printf.printf "local_var_lst len: %d\n" (List.length local_var_lst);
     let tree = Node (Empty, tree_lst) in
-    Some (function_info, tree, local_var_lst)
+    (* 引数の順番を正しいものに変更 *)
+    Some (function_info, tree, (List.rev local_var_lst))
   | _ -> None
 
 let print_perform_expressions structure =
