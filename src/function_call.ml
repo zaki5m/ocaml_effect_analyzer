@@ -27,9 +27,7 @@ let rec find_perform_in_expr ?(is_perform_name = false) is_patern_search expr (l
     (* vbを走査 *)
     Printf.printf "vb_list len: %d\n" (List.length vb_list);
     (* 以下の処理は要改善 *)
-    Printf.printf "local_var_lst len: %d\n" (List.length local_var_lst);
     let (tmp_tree_lst, new_local_var_lst) = List.fold_left (fun (tree_lst, var_lst) vb -> let (lst1, lst2) = find_perform_in_value_binding is_patern_search vb local_var_lst in (lst1@tree_lst, lst2@var_lst)) ([], []) vb_list in
-    Printf.printf "new_local_var_lst len: %d\n" (List.length new_local_var_lst);
     let (new_tree_lst, _) = find_perform_in_expr is_patern_search expr1 new_local_var_lst in
     let new_tree_lst = append_efNameTree_list tmp_tree_lst new_tree_lst in
     (new_tree_lst, local_var_lst)
@@ -301,16 +299,19 @@ let rec find_perform_expr_in_structure_item item =
     Printf.printf "Pstr_value found\n";
     (* 'let' 式をトラバース *)
     let function_info = extract_function_name_and_arg_num_from_vb_list value_bindings in
-    let tree_lst = List.fold_left (fun lst vb -> (fst (find_perform_in_expr Other vb.pvb_expr [])) @ lst) [] value_bindings in (* 今はここでlocalVar listは捨てている *)
-    Printf.printf "tree_lst len: %d\n" (List.length tree_lst);
+    (* 相互再帰には未対応 *)
+    (* let tree_lst = List.fold_left (fun lst vb -> (fst (find_perform_in_expr Other vb.pvb_expr [])) @ lst) [] value_bindings in (* 今はここでlocalVar listは捨てている *)
+    Printf.printf "tree_lst len: %d\n" (List.length tree_lst); *)
+    let (tree_lst, local_var_lst) = find_perform_in_expr Other (List.hd value_bindings).pvb_expr [] in
+    Printf.printf "local_var_lst len: %d\n" (List.length local_var_lst);
     let tree = Node (Empty, tree_lst) in
-    Some (function_info, tree)
+    Some (function_info, tree, local_var_lst)
   | _ -> None
 
 let print_perform_expressions structure =
   let result = List.map (fun item -> find_perform_expr_in_structure_item item) structure in
   let result = List.filter_map (fun item -> item) result in
-  List.iter (fun ((function_name, args), tree) ->
+  List.iter (fun ((function_name, args), tree, _) ->
     Printf.printf "function name: %s\n" function_name;
     Printf.printf "args len: %d\n" args; 
     print_endline (efNameTree_to_string tree)) result;

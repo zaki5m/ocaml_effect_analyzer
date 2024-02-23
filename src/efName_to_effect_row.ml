@@ -141,12 +141,14 @@ let rec analyze_efNameTree (exp_lst: ((string * int)* efNameTree) list) tree = m
     
 
 
-let rec analyze_function_call (exp_lst: ((string * int)* efNameTree) list) (lst: ((string * int) * efNameTree)list) = match lst with
+let rec analyze_function_call (exp_lst: ((string * int)* efNameTree * localVar list) list) (lst: ((string * int) * efNameTree * localVar list)list) = match lst with
   | [] -> []
-  | (name,tree) :: tl -> 
+  | (name,tree, _) :: tl -> 
     Printf.printf "function_name: %s\n" (fst name);
-    let new_exp_lst = (name, analyze_efNameTree exp_lst tree) in
+    (* 一時的な処理 *)
+    let tmp_exp_lst = List.map (fun (name, tree, _) -> (name, tree)) exp_lst in
+    let new_exp_lst = (name, analyze_efNameTree tmp_exp_lst tree) in
     match new_exp_lst with
     | (_, None) -> analyze_function_call exp_lst tl
     | (name, Some tree) ->
-        (name, tree) ::analyze_function_call ((name, tree)::exp_lst) tl
+        (name, tree) ::analyze_function_call ((name, tree, [])::exp_lst) tl

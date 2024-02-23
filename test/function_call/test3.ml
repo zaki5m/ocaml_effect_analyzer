@@ -8,7 +8,7 @@ let function_call_test =
   assert (List.length result = 3);
   let first = List.hd result in
   let expect_first_node = Node (Empty, [Node (EffectName "Increment",[])]) in 
-  assert (first = (("sum_up", 1), expect_first_node));
+  assert (first = (("sum_up", 1), expect_first_node, [ArgsVar ("acc", Leaf)]));
   let second = List.hd (List.tl result) in
   let expect_handler = 
     [Effc [("_", Node (Empty, [])); ("Increment", Node (Empty, [Node (FunctionName ("continue", [], [ArgsVar ("k", Leaf); ArgsVar ("eff", Leaf); ArgsVar ("()", Leaf)], [ArgVar "k"; ArgVar "s"]), [])]))]; 
@@ -16,10 +16,11 @@ let function_call_test =
     Retc (Node (FunctionName ("unknown", [], [ArgsVar ("_", Leaf); ArgsVar ("()", Leaf)], [ArgValue]), []))
     ] 
   in
-  print_endline (efNameTree_to_string (snd second));
+  let (_, second_tree, _) = second in
+  print_endline (efNameTree_to_string second_tree);
   let expect_second_node = Node (Empty, [Node (FunctionName ("sum_up", expect_handler, [ArgsVar ("()", Leaf)], [ArgValue]), [])]) in
-  assert (second = (("main", 1), expect_second_node));
+  assert (second = (("main", 1), expect_second_node, [ArgsVar ("()", Leaf)]));
   let third = List.hd (List.tl (List.tl result)) in
   let expect_third_node = Node (Empty, [Node (FunctionName ("main", [], [], [ArgValue]), [])]) in
-  assert (third = (("_", 0), expect_third_node));
+  assert (third = (("_", 0), expect_third_node, []));
   print_endline "function_call_test <test3> passed"

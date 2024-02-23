@@ -8,8 +8,9 @@ let function_call_test =
   assert (List.length result = 3);
   let first = List.hd result in
   let expect_first_node = Node (Empty, [Node (EffectName "Increment",[Node (EffectName "Increment", [])])]) in
-  print_endline (efNameTree_to_string (snd first));
-  assert (first = (("sum_up", 1), expect_first_node));
+  let (_, first_tree, _) = first in
+  print_endline (efNameTree_to_string first_tree);
+  assert (first = (("sum_up", 1), expect_first_node, [ArgsVar ("acc", Leaf)]));
   let second = List.hd (List.tl result) in
   let expect_inside_handler = 
     [
@@ -26,9 +27,10 @@ let function_call_test =
     ] 
   in
   let expect_second_node = Node (Empty, [Node (FunctionName ("sum_up", expect_handler, [ArgsVar ("()", Leaf)], [ArgValue]), [])]) in
-  print_endline (efNameTree_to_string (snd second));
-  assert (second = (("main", 1), expect_second_node));
+  let (_, second_tree, _) = second in
+  print_endline (efNameTree_to_string second_tree);
+  assert (second = (("main", 1), expect_second_node, [ArgsVar ("()", Leaf)]));
   let third = List.hd (List.tl (List.tl result)) in
   let expect_third_node = Node (Empty, [Node (FunctionName ("main", [], [], [ArgValue]), [])]) in
-  assert (third = (("_", 0), expect_third_node));
+  assert (third = (("_", 0), expect_third_node, []));
   print_endline "function_call_test <test4> passed"
