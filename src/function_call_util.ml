@@ -86,12 +86,12 @@ let rec remove_duplicate_case lst tmp_lst = match lst with
 
 (* FunctionNameの第一要素が任意の文字列ならtrueそうでなければfalseを返す関数 *)
 let is_any_function_name (function_name: string) efName = match efName with
-  | FunctionName (name, _, _) -> name = function_name
+  | FunctionName (name, _, _, _) -> name = function_name
   | _ -> false
 
 (* efNameからefNameOfHandlerのlistを返す関数 *)
 let extract_efNameOfHandler_from_efName (efName: efName) = match efName with
-  | FunctionName (_, handler, _) -> handler
+  | FunctionName (_, handler, _, _) -> handler
   | _ -> []
 
 (* efNameのlistからefNameofHandlerを返す関数 *)
@@ -134,7 +134,7 @@ let rec add_efName_tree (tree: efNameTree) (append_tree: efNameTree) = match tre
 
 (* treeのLeafまで走査して，新たなNodeを追加する関数 (appendするのがlist version) *)
 let rec add_efName_tree_list (tree: efNameTree) (append_tree: efNameTree list) = match tree with
-  | Leaf -> Node (FunctionName ("unit", [], []), append_tree)
+  | Leaf -> Node (FunctionName ("unit", [], [], []), append_tree)
   | Node (efName, []) -> Node (efName, append_tree)
   | Node (efName, lst) -> Node (efName, List.map (fun new_tree -> add_efName_tree_list new_tree append_tree) lst)
 
@@ -145,7 +145,7 @@ let rec add_efName_tree_to_leaf (tree: efNameTree) (append_tree: efNameTree) = m
 
 (* treeのLeafにのみ新たなNodeを追加する関数 (appendするのがlist version) *)
 let rec add_efName_tree_list_to_leaf (tree: efNameTree) (append_tree: efNameTree list) = match tree with
-  | Leaf -> Node (FunctionName ("unit", [], []), append_tree)
+  | Leaf -> Node (FunctionName ("unit", [], [], []), append_tree)
   | Node (efName, lst) -> Node (efName, List.map (fun new_tree -> add_efName_tree_list_to_leaf new_tree append_tree) lst)
 
 (* efNameTreeのリストを結合する関数 *)

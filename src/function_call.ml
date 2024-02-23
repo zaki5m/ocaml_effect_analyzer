@@ -75,18 +75,21 @@ let rec find_perform_in_expr ?(is_perform_name = false) is_patern_search expr (l
       let tmp_tree_lst = List.fold_left (fun lst expr -> (fst (find_perform_in_expr is_patern_search expr local_var_lst)) @ lst ) [] tmp_args in (* この部分は要改善 *)
       let tmp_func_name = extract_function_name (List.hd tmp_args) in (* argsの中で関数適用があった場合を未処理 *)
       let handler = analyze_handler handler_record local_var_lst in
-      let new_tree_lst = append_efNameTree tmp_tree_lst (Node (FunctionName (tmp_func_name, handler, local_var_lst), [])) in
+      (* 一引数目は関数名のためskip *)
+      let tmp_args = List.map (fun expr -> args_analys_expr expr) (List.tl tmp_args) in (* ToDo: Argsの中身について調べる *)
+      let new_tree_lst = append_efNameTree tmp_tree_lst (Node (FunctionName (tmp_func_name, handler, local_var_lst, tmp_args), [])) in
       (new_tree_lst, local_var_lst)
     else
-      let tmp_tree_lst = 
-        List.fold_left (fun lst (_, expr) -> 
+      let (tmp_tree_lst, arg_lst) = 
+        List.fold_left (fun (tree_lst, arg_lst) (_, expr) -> 
           let (tmp_efName_tree, _) = find_perform_in_expr is_patern_search expr local_var_lst in
-          match lst with
-          | [] -> tmp_efName_tree
-          | _ -> List.map (fun tree -> add_efName_tree_list tree tmp_efName_tree) lst
-        ) [] (List.rev args) 
+          let arg = args_analys_expr expr in
+          match tree_lst with
+          | [] -> (tmp_efName_tree, arg::arg_lst)
+          | _ -> (List.map (fun tree -> add_efName_tree_list tree tmp_efName_tree) tree_lst, arg::arg_lst)
+        ) ([], []) (List.rev args) 
       in
-      let tmp_tree_lst = append_efNameTree tmp_tree_lst (Node (FunctionName (func_name, [], local_var_lst), [])) in
+      let tmp_tree_lst = append_efNameTree tmp_tree_lst (Node (FunctionName (func_name, [], local_var_lst, arg_lst), [])) in
       Printf.printf "tmp_tree_lst len: %d\n" (List.length tmp_tree_lst);
       (tmp_tree_lst, local_var_lst)
   | Pexp_array exprs ->
@@ -198,7 +201,7 @@ and find_perform_in_cases is_patern_search cases local_var_lst :efNameTree list 
     let tmp_perform_lst = Effc (List.fold_left (fun lst case -> ((find_perform_in_case case local_var_lst)) @ lst) [] cases) in
     (* let new_perform_lst = perform_lst_append FunctionName ("effect", [tmp_perform_lst])] perform_lst in
     new_perform_lst *)
-    [Node (FunctionName (" ",[tmp_perform_lst], local_var_lst), [])]
+    [Node (FunctionName (" ",[tmp_perform_lst], local_var_lst, []), [])]
   | Exception -> []
   | Other -> 
     let tmp_perform_lst = List.fold_left (fun lst case -> ((find_perform_in_case case local_var_lst)) @ lst) [] cases in
@@ -273,6 +276,12 @@ and analyze_handler handler_record local_var_lst = match handler_record.pexp_des
   Printf.printf "handler len: %d\n" (List.length handler);
   handler
   | _ -> []
+(* 引数のexprを解析して適切な形に変換する *)
+and args_analys_expr expr = match expr.pexp_desc with
+  | Pexp_constant _ -> ArgValue
+  | Pexp_ident name -> ArgVar (extract_ident_from_construct name)
+  | _ -> ArgValue (* あとで変更する *)
+
 
 (* 構文要素をトラバースしてエフェクトを使用する部分を探す *)
 

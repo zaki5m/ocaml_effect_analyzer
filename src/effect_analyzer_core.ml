@@ -1,6 +1,6 @@
 (* 関数名かエフェクト名かの区別を行う *)
 type efName = 
-  | FunctionName of string * efNameOfHandler list * localVar list
+  | FunctionName of string * efNameOfHandler list * localVar list * arg list 
   | EffectName of string
   | Empty
 and efNameOfHandler = 
@@ -15,6 +15,11 @@ and localVar =
   | LocalVar of string * localVar list * efNameTree (* 変数名(関数名), 引数の内容, その関数の中身のtree *)
   | ArgsVar of string * efNameTree (* 引数の変数名, その変数の中身のtree(Leafならば値) *)
   | EmptyVar
+(* 関数にapplyするときの引数の型 *)
+and arg =
+  | ArgVar of string 
+  | ArgValue 
+  (* | ArgNotVar of efNameTree *) (* 引数で関数適用があった場合に対応が必要 *)
 
   (* handlerが変数で与えられた際の型を定義しておく必要がある *)
 

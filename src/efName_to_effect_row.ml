@@ -18,7 +18,7 @@ let any_exist_wildcard effect_lst =
 let rec analyze_handler_serch_continue tree = match tree with
   | Leaf -> None
   | Node (efName, lst) -> (match efName with 
-    | FunctionName (name, tmp_handler, _) ->
+    | FunctionName (name, tmp_handler, _, _) ->
       if name = "continue" then 
         Some Leaf
       else 
@@ -66,7 +66,7 @@ let analyze_handler (tree: efNameTree) (handler: efNameOfHandler list) =
 
 (* handlerの解析はまだできていない *)
 let analyze_efName (exp_lst: ((string * int) * efNameTree) list) efName: (efNameTree * efNameOfHandler list) = match efName with
-  | FunctionName (name, lst, _) -> 
+  | FunctionName (name, lst, _, _) -> 
     if name = "continue" then (* continueの場合は残しておく *)
       (Node (efName, []), lst)
     else

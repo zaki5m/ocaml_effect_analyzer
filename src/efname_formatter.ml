@@ -17,7 +17,7 @@ and efNameTree_to_string (efName_tree: efNameTree) :string =
   | Node (efName, efName_tree) -> efName_to_string efName ^ " -> (" ^ (List.fold_left (fun before a -> before ^ efNameTree_to_string a) "" efName_tree) ^ ")"
 and efName_to_string (efName: efName) :string =
   match efName with
-  | FunctionName (name,handler, local_var_lst)  -> "(" ^ name ^ " , [ " ^ (handlers_to_string handler) ^ " || " ^ List.fold_left (fun str a -> str ^ local_var_to_string a) "" local_var_lst ^ ")"
+  | FunctionName (name,handler, local_var_lst,arg_lst)  -> "(" ^ name ^ " { " ^ List.fold_left (fun str arg -> str ^ arg_to_string arg) "" arg_lst ^ " } " ^ " , [ " ^ (handlers_to_string handler) ^ " || " ^ List.fold_left (fun str a -> str ^ local_var_to_string a) "" local_var_lst ^ ")"
   | EffectName name -> name
   | Empty -> "Empty"
 and efName_list_to_string efName_list =
@@ -26,6 +26,12 @@ and efName_list_to_string efName_list =
   | efName::efName_list -> (efName_list_to_string efName_list) ^ " -> " ^ (efName_to_string efName)
 and local_var_to_string (local_var: localVar) =
   match local_var with
-  | LocalVar (name, local_var_lst, _) -> "function name: " ^ name ^ "  " ^ List.fold_left (fun str a -> str ^ local_var_to_string a) "" local_var_lst
+  | LocalVar (name, local_var_lst, _) -> 
+    "function name: " ^ name  ^ " " ^
+    List.fold_left (fun str a -> str ^ local_var_to_string a) "" local_var_lst
   | ArgsVar (name, _) -> "arg: " ^ name ^ " "
   | EmptyVar -> "EmptyVar"
+and arg_to_string (arg: arg) =
+  match arg with
+  | ArgVar name ->  " apply_arg " ^ name ^ ""
+  | ArgValue -> " apply_arg value "
