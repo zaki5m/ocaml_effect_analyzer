@@ -2,30 +2,6 @@ open Effect_analyzer_core
 open Function_call_util
 open Efname_formatter
 
-let rec handler_lst_analyze lst effect_lst exception_lst ret_lst = match lst with
-  | [] -> (effect_lst, exception_lst, ret_lst)
-  | hd :: tl -> (match hd with
-    | Effc effect_lst -> handler_lst_analyze tl effect_lst exception_lst ret_lst
-    | Exnc exception_lst -> handler_lst_analyze tl effect_lst exception_lst ret_lst
-    | Retc ret_lst -> handler_lst_analyze tl effect_lst exception_lst ret_lst)
-
-let any_exist_wildcard effect_lst = 
-  let result = List.find_opt (fun (name, _) -> name = "_") effect_lst in
-  match result with
-  | Some (_, ef_lst) -> ef_lst
-  | None -> Leaf
-
-let rec analyze_handler_serch_continue tree = match tree with
-  | Leaf -> None
-  | Node (efName, lst) -> (match efName with 
-    | FunctionName (name, tmp_handler, _, _) ->
-      if name = "continue" then 
-        Some Leaf
-      else 
-        Some (Node (efName, (List.filter_map (fun tree -> analyze_handler_serch_continue tree) lst)))
-    | _ -> Some (Node (efName, (List.filter_map (fun tree -> analyze_handler_serch_continue tree) lst)))
-  )
-
 
 let analyze_handler (tree: efNameTree) (handler: efNameOfHandler list) = 
   let (effect_lst, exception_lst, ret_tree) = handler_lst_analyze handler [] [] Leaf in
@@ -65,29 +41,48 @@ let analyze_handler (tree: efNameTree) (handler: efNameOfHandler list) =
   
 
 (* handlerの解析はまだできていない *)
-let analyze_efName (exp_lst: ((string * int) * efNameTree) list) efName: (efNameTree * efNameOfHandler list) = match efName with
-  | FunctionName (name, lst, _, _) -> 
+let analyze_efName (exp_lst: ((string * int) * efNameTree * localVar list) list) efName local_var_lst  : ((efNameTree * efNameOfHandler list)) = match efName with
+  | FunctionName (name, lst, current_eval, arg_lst) -> 
+    Printf.printf "------------😀function_name: %s\n" name;
     if name = "continue" then (* continueの場合は残しておく *)
       (Node (efName, []), lst)
     else
-      let result = List.find_opt (fun ((n,_), _) -> n = name) exp_lst in
+      let result = find_local_var name local_var_lst in
       (match result with
-      | Some (_, tmp_lst) -> (tmp_lst, lst)
-      | None -> (Leaf, [])) (* ユーザ定義でない関数からはeffectのperformはないものとして考える *)
+      | Some (LocalVar (_, _, _)) -> (* 要改善 *)
+        (Node (efName, []), lst)
+      | Some (ArgsVar (_, _)) ->
+        let result = find_local_var name current_eval in
+        (match result with
+        | Some (LocalVar (_,_,new_tree))-> (* 関数の部分適用はないものと考える *)
+          Printf.printf "new_tree1: %s\n" (efNameTree_to_string new_tree);
+          (new_tree, lst)
+        | _ ->
+          Printf.printf "name: %s\n" name;
+          (Node (efName, []), lst))
+      | _ -> 
+        let result = find_local_var name current_eval in
+        (match result with
+        | Some (LocalVar (_,_,new_tree))-> (* 関数の部分適用はないものと考える *)
+          Printf.printf "new_tree2: %s\n" (efNameTree_to_string new_tree);
+          (new_tree, lst)
+        | _ ->
+          Printf.printf "🥰name: %s\n" name;
+          (Leaf, []))) (* ユーザ定義でない関数からはeffectのperformはないものとして考える *)
   | EffectName name -> (Node (EffectName name, []), [])
   | Empty -> (Leaf, [])
 
 (* handler内の解析を行う *)
-let rec analyze_handler_inside exp_lst handler = 
+let rec analyze_handler_inside exp_lst handler local_var_lst = 
   let (effect_tree, exception_tree, ret_tree) = handler_lst_analyze handler [] [] Leaf in
   let rec loop tree = match tree with
     | Leaf -> None
     | Node (name, lst) -> 
-      let (efName, handler) = analyze_efName exp_lst name in
+      let (efName, handler) = analyze_efName exp_lst name local_var_lst in
       let efName = 
         if List.length handler = 0 then efName
         else 
-          let new_handler = analyze_handler_inside exp_lst handler in
+          let new_handler = analyze_handler_inside exp_lst handler local_var_lst in
           analyze_handler efName new_handler
       in
       let new_tree_lst = List.filter_map(fun tree -> loop tree) lst in
@@ -120,17 +115,21 @@ let rec analyze_handler_inside exp_lst handler =
   in
   [Effc effect_tree; Exnc exception_tree; Retc ret_tree]
 
-let rec analyze_efNameTree (exp_lst: ((string * int)* efNameTree) list) tree = match tree with
+let rec analyze_efNameTree (exp_lst: ((string * int)* efNameTree * localVar list ) list) tree local_var_lst : efNameTree option  = match tree with
   | Leaf -> None
   | Node (name, lst) -> 
-    let (efName, handler) = analyze_efName exp_lst name in
+    Printf.printf "-------😡-------\n";
+    Printf.printf "%s\n" (efNameTree_to_string tree);
+    Printf.printf "-------😡-------\n";
+    let (efName, handler) = analyze_efName exp_lst name local_var_lst in
+    Printf.printf  "handler len: %d\n"  (List.length handler);
     let efName = 
       if List.length handler = 0 then efName
       else 
-        let new_handler = analyze_handler_inside exp_lst handler in
+        let new_handler = analyze_handler_inside exp_lst handler local_var_lst in
         analyze_handler efName new_handler
     in
-    let new_tree_lst = List.filter_map(fun tree -> analyze_efNameTree exp_lst tree) lst in
+    let new_tree_lst = List.filter_map(fun tree -> analyze_efNameTree exp_lst tree local_var_lst) lst in
     if new_tree_lst = [] && efName = Leaf then 
       None
     else
@@ -143,12 +142,10 @@ let rec analyze_efNameTree (exp_lst: ((string * int)* efNameTree) list) tree = m
 
 let rec analyze_function_call (exp_lst: ((string * int)* efNameTree * localVar list) list) (lst: ((string * int) * efNameTree * localVar list)list) = match lst with
   | [] -> []
-  | (name,tree, _) :: tl -> 
+  | (name,tree, local_var_lst) :: tl -> 
     Printf.printf "function_name: %s\n" (fst name);
-    (* 一時的な処理 *)
-    let tmp_exp_lst = List.map (fun (name, tree, _) -> (name, tree)) exp_lst in
-    let new_exp_lst = (name, analyze_efNameTree tmp_exp_lst tree) in
+    let new_exp_lst = (name, analyze_efNameTree exp_lst tree local_var_lst) in
     match new_exp_lst with
     | (_, None) -> analyze_function_call exp_lst tl
     | (name, Some tree) ->
-        (name, tree) ::analyze_function_call ((name, tree, [])::exp_lst) tl
+        (name, tree) ::analyze_function_call ((name, tree, local_var_lst)::exp_lst) tl

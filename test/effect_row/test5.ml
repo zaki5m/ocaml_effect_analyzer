@@ -22,14 +22,10 @@ let function_call_test =
       [Node (Empty, 
         [Node (EffectName "Increment", 
           [Node (Empty, 
-            [Node (FunctionName ("unit", [], [], []), 
-              [Node (Empty, 
-                [Node (EffectName "Increment", 
-                  [Node (FunctionName ("unit", [], [], []), [])
-                  ]);
-                Node (EffectName "Decrement", 
-                  [Node (FunctionName ("unit", [], [], []), [])
-                  ])
+            [Node (Empty,
+              [Node (Empty,
+                [Node (EffectName "Increment", []);
+                Node (EffectName "Decrement", [])
                 ])
               ])
             ])
@@ -37,6 +33,7 @@ let function_call_test =
         ])
       ]) 
   in
+  print_endline (efNameTree_to_string (snd second));
   assert (second = (("main", 1), expect_second_node));
   let third = List.hd (List.tl (List.tl result)) in
   let expect_third_node = Node (Empty, [expect_second_node])

@@ -17,9 +17,9 @@ and localVar =
   | EmptyVar
 (* 関数にapplyするときの引数の型 *)
 and arg =
-  | ArgVar of string 
+  | ArgVar of string (* 引数が変数で与えられた場合の中身 *)
   | ArgValue 
-  (* | ArgNotVar of efNameTree *) (* 引数で関数適用があった場合に対応が必要 *)
+  (* | ArgApply of efNameTree 引数で関数適用があった場合に対応が必要 *)
 
   (* handlerが変数で与えられた際の型を定義しておく必要がある *)
 

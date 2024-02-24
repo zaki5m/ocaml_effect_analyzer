@@ -15,15 +15,13 @@ let function_call_test =
       [Node (Empty, 
         [Node (EffectName "Increment", 
           [Node (Empty, 
-            [Node (FunctionName ("unit", [], [], []), 
+            [Node (Empty,
               [Node (EffectName "Increment", 
                 [Node (Empty, 
                   [Node (EffectName "Increment", 
                     [Node (Empty, 
-                      [Node (FunctionName ("unit", [], [], []), 
-                        [Node (EffectName "Increment", 
-                          [Node (FunctionName ("unit", [], [], []), [])
-                          ])
+                      [Node (Empty,
+                        [Node (EffectName "Increment", [])
                         ])
                       ])
                     ])
@@ -35,6 +33,7 @@ let function_call_test =
         ])
       ]) 
   in
+  print_endline (efNameTree_to_string (snd second));
   assert (second = (("main", 1), expect_second_node));
   let third = List.hd (List.tl (List.tl result)) in
   let expect_third_node = 
@@ -43,15 +42,13 @@ let function_call_test =
         [Node (Empty, 
           [Node (EffectName "Increment", 
             [Node (Empty, 
-              [Node (FunctionName ("unit", [], [], []), 
+              [Node (Empty, 
                 [Node (EffectName "Increment", 
                   [Node (Empty, 
                     [Node (EffectName "Increment", 
                       [Node (Empty, 
-                        [Node (FunctionName ("unit", [], [], []), 
-                          [Node (EffectName "Increment", 
-                            [Node (FunctionName ("unit", [], [], []), [])
-                            ])
+                        [Node (Empty, 
+                          [Node (EffectName "Increment", [])
                           ])
                         ])
                       ])
@@ -64,5 +61,6 @@ let function_call_test =
         ])
       ])
   in
+  print_endline (efNameTree_to_string (snd third));
   assert (third = (("_", 0), expect_third_node));
   print_endline "function_call_test <test4> passed"

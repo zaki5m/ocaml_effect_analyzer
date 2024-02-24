@@ -203,4 +203,34 @@ let create_localVar (function_name: string) (tmp_local_var_lst: localVar list) (
     Some local_var
 
 
-(* パターンマッチのケースを解析する *)
+(* localVar listから変数名が一致するものを探して取り出す関数 *)
+let rec find_local_var (name: string) (current_eval: localVar list) = match current_eval with
+  | [] -> None
+  | hd :: tl -> match hd with
+    | LocalVar (n, _, _) -> if n = name then Some hd else find_local_var name tl
+    | ArgsVar (n, _) -> if n = name then Some hd else find_local_var name tl
+    | _ -> find_local_var name tl
+
+let rec handler_lst_analyze lst effect_lst exception_lst ret_lst = match lst with
+  | [] -> (effect_lst, exception_lst, ret_lst)
+  | hd :: tl -> (match hd with
+    | Effc effect_lst -> handler_lst_analyze tl effect_lst exception_lst ret_lst
+    | Exnc exception_lst -> handler_lst_analyze tl effect_lst exception_lst ret_lst
+    | Retc ret_lst -> handler_lst_analyze tl effect_lst exception_lst ret_lst)
+
+let any_exist_wildcard effect_lst = 
+  let result = List.find_opt (fun (name, _) -> name = "_") effect_lst in
+  match result with
+  | Some (_, ef_lst) -> ef_lst
+  | None -> Leaf
+
+let rec analyze_handler_serch_continue tree = match tree with
+  | Leaf -> None
+  | Node (efName, lst) -> (match efName with 
+    | FunctionName (name, tmp_handler, _, _) ->
+      if name = "continue" then 
+        Some Leaf
+      else 
+        Some (Node (efName, (List.filter_map (fun tree -> analyze_handler_serch_continue tree) lst)))
+    | _ -> Some (Node (efName, (List.filter_map (fun tree -> analyze_handler_serch_continue tree) lst)))
+  )

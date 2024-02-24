@@ -11,6 +11,7 @@ open Efname_formatter
 open Function_call_util
 open EfName_to_effect_row
 open Typedtree_formatter
+open Into_local_var
 
 (* 式内で 'perform' を探す *)
 (* is_patern_searchはハンドラのパターンをトラバースするときに使う *)
@@ -348,7 +349,8 @@ let parse_test_ocaml_file filename =
 
 let effect_row_test filename = 
   let parsed_file = parse_test_ocaml_file filename in 
-  let result = analyze_function_call [] parsed_file in
+  let result = function_call_to_mid_call_flow [] (parsed_file) in
+  let result = analyze_function_call [] result in
   result 
 
 (* let main () =
@@ -359,9 +361,21 @@ let effect_row_test filename =
         print_endline (efNameTree_to_string perform_lst);) result;
   () *)
 
-let main () =
-  parse_ocaml_file Sys.argv.(1);
+let main () = 
+  let parsed_file = parse_test_ocaml_file Sys.argv.(1) in
+  let result = function_call_to_mid_call_flow [] (parsed_file) in
+  let result2 = analyze_function_call [] result in
+  List.iter (fun (function_info, perform_lst, _) ->
+        Printf.printf "function_name: %s\n" (fst function_info);
+        print_endline (efNameTree_to_string perform_lst);) result;
+  List.iter (fun (function_info, perform_lst) ->
+        Printf.printf "function_name: %s\n" (fst function_info);
+        print_endline (efNameTree_to_string perform_lst);) result2;
   ()
+
+(* let main () =
+  parse_ocaml_file Sys.argv.(1);
+  () *)
 
 (* 型チェックの実行 *)
 (* let type_check ast =
