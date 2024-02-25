@@ -1,17 +1,12 @@
 import cytoscape from 'cytoscape';
-
-const elements: cytoscape.ElementDefinition[] = [
-    { data: { id: 'a' } },
-    { data: { id: 'b' } },
-    { data: { id: 'ab', source: 'a', target: 'b' } }
-];
+import elements from './elements.json';
 
 const style: cytoscape.Stylesheet[] = [
     {
-        selector: 'node',
+        selector: 'node[label = "Effect"]',
         style: {
             'background-color': '#666',
-            'label': 'data(id)'
+            'label': 'data(name)'
         }
     },
     {
