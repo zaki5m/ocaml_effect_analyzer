@@ -19,12 +19,12 @@ let function_call_test =
   let second = List.hd (List.tl result) in
   let expect_handler = 
     [
+      Retc (Node (FunctionName ("unknown", [], [ArgsVar ("_", Leaf); ArgsVar ("()", Leaf)], [ArgValue]), []));
+      Exnc [("_", Node (FunctionName ("raise", [], [ArgsVar ("e", Leaf); ArgsVar ("()", Leaf)], [ArgVar "e"]), []))];
       Effc [("_", Node (Empty, [])); 
             ("Decrement", Node (Empty, [Node (FunctionName ("continue", [], [ArgsVar ("k", Leaf); ArgsVar ("eff", Leaf); ArgsVar ("()", Leaf)], [ArgVar "k"; ArgVar "s"]), [])]));
             ("Increment", Node (Empty, [Node (FunctionName ("continue", [], [ArgsVar ("k", Leaf); ArgsVar ("eff", Leaf); ArgsVar ("()", Leaf)], [ArgVar "k"; ArgVar "s"]), [])]))
-          ]; 
-      Exnc [("_", Node (FunctionName ("raise", [], [ArgsVar ("e", Leaf); ArgsVar ("()", Leaf)], [ArgVar "e"]), []))]; 
-      Retc (Node (FunctionName ("unknown", [], [ArgsVar ("_", Leaf); ArgsVar ("()", Leaf)], [ArgValue]), []))
+          ] 
     ] 
   in
   let expect_second_node = Node (Empty, [Node (FunctionName ("sum_up", expect_handler, [ArgsVar ("()", Leaf)], [ArgValue]), [])]) in

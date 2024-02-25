@@ -14,16 +14,16 @@ let function_call_test =
   let second = List.hd (List.tl result) in
   let expect_inside_handler = 
     [
-      Effc [("_", Node (Empty, [])); ("Increment", Node (Empty, [Node (FunctionName ("continue", [], [ArgsVar ("k", Leaf); ArgsVar ("eff", Leaf); ArgsVar ("a", Leaf); ArgsVar ("()", Leaf)], [ArgVar "k"; ArgVar "s"]), [])]))]; 
+      Retc Leaf;
       Exnc [("_", Node (FunctionName ("raise", [], [ArgsVar ("e", Leaf); ArgsVar ("a", Leaf); ArgsVar ("()", Leaf)], [ArgVar "e"]), []))]; 
-      Retc Leaf
+      Effc [("_", Node (Empty, [])); ("Increment", Node (Empty, [Node (FunctionName ("continue", [], [ArgsVar ("k", Leaf); ArgsVar ("eff", Leaf); ArgsVar ("a", Leaf); ArgsVar ("()", Leaf)], [ArgVar "k"; ArgVar "s"]), [])]))]; 
     ] 
   in
   let expect_handler = 
     [
-      Effc [("_", Node (Empty, [])); ("Increment", Node (Empty, [Node (FunctionName ("continue", [], [ArgsVar ("k", Leaf); ArgsVar ("eff", Leaf); ArgsVar ("()", Leaf)], [ArgVar "k"; ArgVar "s"]), [])]))]; 
+      Retc (Node (FunctionName ("sum_up", expect_inside_handler, [ArgsVar ("a", Leaf); ArgsVar ("()", Leaf)], [ArgVar "a"]), []));
       Exnc [("_", Node (FunctionName ("raise", [], [ArgsVar ("e", Leaf); ArgsVar ("()", Leaf)], [ArgVar "e"]), []))]; 
-      Retc (Node (FunctionName ("sum_up", expect_inside_handler, [ArgsVar ("a", Leaf); ArgsVar ("()", Leaf)], [ArgVar "a"]), []))
+      Effc [("_", Node (Empty, [])); ("Increment", Node (Empty, [Node (FunctionName ("continue", [], [ArgsVar ("k", Leaf); ArgsVar ("eff", Leaf); ArgsVar ("()", Leaf)], [ArgVar "k"; ArgVar "s"]), [])]))]
     ] 
   in
   let expect_second_node = Node (Empty, [Node (FunctionName ("sum_up", expect_handler, [ArgsVar ("()", Leaf)], [ArgValue]), [])]) in

@@ -251,29 +251,16 @@ and analyze_handler handler_record local_var_lst = match handler_record.pexp_des
 | Pexp_record (fields, _) ->
   (* レコードの場合はフィールドをトラバースする *)
   Printf.printf "record found: %s\n" (Pprintast.string_of_expression handler_record);
-  (* 今回はfieldに全ての要素がある場合のみ対応 *)
-  let (name1, field1) = List.nth fields 0 in
-  let (name2, field2) = List.nth fields 1 in
-  let (name3, field3) = List.nth fields 2 in 
-  let name1 = extract_ident_from_construct name1 in
-  (* name1がeffectで決めうちかつ，effectの発生のパターンマッチが必ず起こるパターンに限定 *)
-  Printf.printf "name1: %s\n" name1;
-  let (lst1,_) = find_perform_in_expr (pattern_type_of_string name1) field1 local_var_lst in
-  Printf.printf "lst1 len: %d\n" (List.length lst1);
-  let effect_handler = efNameOfHandler_list_from_efName_list (List.hd lst1) Effect in
-  let name2 = extract_ident_from_construct name2 in
-  Printf.printf "name2: %s\n" name2;
-  let (lst2, _) = find_perform_in_expr (pattern_type_of_string name2) field2 local_var_lst in
-  let lst2 = if (List.length lst2 = 0) then Leaf else (List.hd lst2) in
-  let exception_handler = efNameOfHandler_list_from_efName_list lst2 Exception in
-  let name3 = extract_ident_from_construct name3 in
-  Printf.printf "name3: %s\n" name3;
-  let (lst3, _) = find_perform_in_expr (pattern_type_of_string name3) field3 local_var_lst in
-  let lst3 = if (List.length lst3 = 0) then Leaf else (List.hd lst3) in
-  let other_handler = efNameOfHandler_list_from_efName_list lst3 Other in
-  let handler = effect_handler @ exception_handler @ other_handler in
-  Printf.printf "handler : %s\n" (handlers_to_string handler);
-  handler
+  let rec loop lst handler = match lst with
+    | [] -> handler
+    | (name, field)::rest -> 
+      let name = extract_ident_from_construct name in
+      let (lst1, _) = find_perform_in_expr (pattern_type_of_string name) field local_var_lst in
+      let lst1 = if (List.length lst1 = 0) then Leaf else (List.hd lst1) in
+      let new_handler = efNameOfHandler_list_from_efName_list lst1 (pattern_type_of_string name) in
+      loop rest (new_handler@handler)
+  in
+  loop fields []
   | _ -> []
 (* 引数のexprを解析して適切な形に変換する *)
 and args_analys_expr expr = match expr.pexp_desc with
