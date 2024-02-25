@@ -272,7 +272,7 @@ and analyze_handler handler_record local_var_lst = match handler_record.pexp_des
   let lst3 = if (List.length lst3 = 0) then Leaf else (List.hd lst3) in
   let other_handler = efNameOfHandler_list_from_efName_list lst3 Other in
   let handler = effect_handler @ exception_handler @ other_handler in
-  Printf.printf "handler len: %d\n" (List.length handler);
+  Printf.printf "handler : %s\n" (handlers_to_string handler);
   handler
   | _ -> []
 (* 引数のexprを解析して適切な形に変換する *)

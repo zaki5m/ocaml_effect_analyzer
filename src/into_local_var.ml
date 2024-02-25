@@ -152,64 +152,77 @@ let change_efName (exp_lst: (((string * int) * efNameTree * localVar list) * boo
 
 (* handler内の解析を行う *)
 let rec change_handler_inside exp_lst handler local_var_lst  = 
+  let used_args = ref false in
   let (effect_tree, exception_tree, ret_tree) = handler_lst_analyze handler [] [] Leaf in
   let rec loop tree = match tree with
-    | Leaf -> None
+    | Leaf -> (None, false)
     | Node (name, lst) -> 
-      let ((efName, handler, rest_local_var), used_args) = change_efName exp_lst name [] in
-      let efName = 
-        if List.length handler = 0 then efName
+      let ((efName, handler, rest_local_var), used_args) = change_efName exp_lst name local_var_lst in
+      let (efName, new_used_args) = 
+        if List.length handler = 0 then (efName, false)
         else 
-          let new_handler = change_handler_inside exp_lst handler local_var_lst in
-          change_handler efName new_handler local_var_lst
+          let (new_handler, tmp_used_args) = change_handler_inside exp_lst handler local_var_lst in
+          (change_handler efName new_handler local_var_lst, tmp_used_args)
       in
-      let new_tree_lst = List.filter_map(fun tree -> loop tree) lst in
+      let new_tree_lst = List.map(fun tree -> loop tree) lst in
+      let new_tree_lst = List.filter(fun (tree, _) -> tree != None) new_tree_lst in
       if new_tree_lst = [] && efName = Leaf then 
-        None
+        (None,false)
       else
+        let used_args = new_used_args || used_args || (List.exists (fun (_, used_args) -> used_args) new_tree_lst) in
+        let new_tree_lst = List.map (fun (tree, _) -> Option.get tree) new_tree_lst in
         if efName = Leaf then
-          Some (Node (Empty, new_tree_lst))
+          (Some (Node (Empty, new_tree_lst)), used_args)
         else
-          Some (add_efName_tree_list efName new_tree_lst)    
+          (Some (add_efName_tree_list efName new_tree_lst), used_args)  
   in
   let effect_tree = 
     List.filter_map (fun (name, tree) -> 
       let result = loop tree in 
       match result with 
-        | Some tree -> Some (name, tree)
-        | None -> None
+        | Some tree, tmp_used_args -> 
+          used_args := tmp_used_args || !used_args;
+          Some (name, tree)
+        | None, _ -> None
     ) 
     effect_tree in
   let exception_tree = List.filter_map (fun (name, tree) -> 
     let result = loop tree in 
     match result with 
-      | Some tree -> Some (name, tree)
-      | None -> None
+      | Some tree, tmp_used_args -> 
+        used_args := tmp_used_args || !used_args;
+        Some (name, tree)
+      | None, _ -> None
     )  exception_tree in
   let ret_tree = 
     match loop ret_tree with
-    | Some tree -> tree
-    | None -> Leaf 
+    | Some tree, tmp_used_args -> 
+      used_args := tmp_used_args || !used_args;
+      tree
+    | None, _ -> Leaf 
   in
-  [Effc effect_tree; Exnc exception_tree; Retc ret_tree]
+  ([Effc effect_tree; Exnc exception_tree; Retc ret_tree], !used_args)
 
 let rec change_efNameTree (exp_lst: (((string * int)* efNameTree * localVar list) * bool ) list) tree local_var_lst : (efNameTree option * bool)  = match tree with
   | Leaf -> (None, false)
   | Node (name, lst) -> 
     let ((efName, handler, rest_local_var), used_args) = change_efName exp_lst name local_var_lst in
     (* handlerの解析はあとで行う *)
-    let efName = 
-      if List.length handler = 0 then efName
+    let (efName, new_used_args) = 
+      if List.length handler = 0 then (efName, false)
       else 
-        let new_handler = change_handler_inside exp_lst handler local_var_lst in
-        change_handler efName new_handler local_var_lst
+        let (new_handler, tmp_used_args) = change_handler_inside exp_lst handler local_var_lst in
+        Printf.printf "efName: %s\n" (efNameTree_to_string efName);
+        Printf.printf "pre_handler: %s\n" (handlers_to_string handler);
+        Printf.printf "new_handler: %s\n" (handlers_to_string new_handler);
+        (change_handler efName new_handler local_var_lst, tmp_used_args)
     in
     let new_tree_lst = List.map(fun tree -> change_efNameTree exp_lst tree local_var_lst) lst in
     let new_tree_lst = List.filter(fun (tree, _) -> tree != None) new_tree_lst in
     if new_tree_lst = [] && efName = Leaf then 
       (None, false)
     else
-      let used_args = used_args || (List.exists (fun (_, used_args) -> used_args) new_tree_lst) in
+      let used_args = new_used_args || used_args || (List.exists (fun (_, used_args) -> used_args) new_tree_lst) in
       let new_tree_lst = List.map (fun (tree, _) -> Option.get tree) new_tree_lst in
       if efName = Leaf then
         (Some (Node (Empty, new_tree_lst)), used_args)
