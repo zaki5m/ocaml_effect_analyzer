@@ -8,12 +8,14 @@ cloneした本リポジトリをbuildする
 dune build
 ```
 **effect列の解析**
+
 解析したいfileのpath(filepath)を指定して以下を実行
 ```
 ./_build/default/src/main.exe filepath
 ```
 
 **グラフの描画**
+
 以下を実行して初期設定を行う(2回目以降は不要)
 ```
 cd graph
