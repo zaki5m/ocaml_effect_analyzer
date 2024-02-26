@@ -12,6 +12,7 @@ open Function_call_util
 open EfName_to_effect_row
 open Typedtree_formatter
 open Into_local_var
+open Effect_row_to_graph
 
 (* 式内で 'perform' を探す *)
 (* is_patern_searchはハンドラのパターンをトラバースするときに使う *)
@@ -348,7 +349,7 @@ let effect_row_test filename =
         print_endline (efNameTree_to_string perform_lst);) result;
   () *)
 
-let main () = 
+(* let main () = 
   let parsed_file = parse_test_ocaml_file Sys.argv.(1) in
   let result = function_call_to_mid_call_flow [] (parsed_file) in
   let result2 = analyze_function_call [] result in
@@ -358,6 +359,24 @@ let main () =
   List.iter (fun (function_info, perform_lst) ->
         Printf.printf "function_name: %s\n" (fst function_info);
         print_endline (efNameTree_to_string perform_lst);) result2;
+  () *)
+
+let main () = 
+  let result = effect_row_test Sys.argv.(1) in
+  let result = List.map (fun (function_info, tree) -> (function_info, add_id_to_efNameTree tree 0)) result in
+  let result2 = List.map (fun (function_info, (tree, _)) -> (function_info, split_node_edge tree)) result in
+  let (_, (nodes, edegs)) = List.hd result2 in
+  let _ = write_json (effect_row_to_json nodes edegs) "./graph/src/elements.json" in
+  List.iter (fun (function_info, perform_lst) ->
+        Printf.printf "function_name: %s\n" (fst function_info);
+        print_endline (efNameTreeWithId_to_string (fst perform_lst));) result;
+  List.iter (fun (function_info, (nodes, edes)) ->
+        Printf.printf "function_name: %s\n" (fst function_info);
+        List.iter (fun (a, b) -> Printf.printf "[node: %d, %s] " a b) nodes;
+        print_endline "";
+        List.iter (fun (a,b) -> Printf.printf "[edge: %d, %d] " a b) edes;
+        print_endline "";
+        ) result2;
   ()
 
 (* let main () =

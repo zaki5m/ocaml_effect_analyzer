@@ -15,14 +15,14 @@ const style: cytoscape.Stylesheet[] = [
             'width': 3,
             'line-color': '#ccc',
             'target-arrow-color': '#ccc',
-            'target-arrow-shape': 'triangle'
+            'target-arrow-shape': 'triangle',
+            'curve-style': 'bezier'
         }
     }
 ];
 
 const layout = {
     name: 'grid',
-    rows: 1
 };
 
 cytoscape({

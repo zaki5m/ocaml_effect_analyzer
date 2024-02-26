@@ -35,3 +35,7 @@ and arg_to_string (arg: arg) =
   match arg with
   | ArgVar name ->  " apply_arg " ^ name ^ ""
   | ArgValue -> " apply_arg value "
+and efNameTreeWithId_to_string (efName_tree: efNameTreeWithId) :string =
+  match efName_tree with
+  | LeafWithId id -> "id: " ^ string_of_int id ^ " "
+  | NodeWithId (efName, efName_tree_lst, id) -> "id: " ^ (string_of_int id) ^ " : " ^ efName_to_string efName ^ " -> (" ^ (List.fold_left (fun before a -> before ^ efNameTreeWithId_to_string a) "" efName_tree_lst) ^ ")"

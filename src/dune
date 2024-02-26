@@ -6,9 +6,9 @@
 
 (library
  (name function_call)
- (modules function_call effect_analyzer_core efname_formatter function_call_util efName_to_effect_row typedtree_formatter into_local_var)
+ (modules function_call effect_analyzer_core efname_formatter function_call_util efName_to_effect_row typedtree_formatter into_local_var effect_row_to_graph)
  (public_name effect_analyzer.function_call)
- (libraries compiler-libs.common))
+ (libraries compiler-libs.common yojson))
 
 (env
   (dev

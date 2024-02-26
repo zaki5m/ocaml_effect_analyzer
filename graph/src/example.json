@@ -1,0 +1,9 @@
+{
+    "nodes":[
+        { "data": { "id": "a", "name": "Increment", "label": "Effect" } },
+        { "data": { "id": "b", "name": "Increment", "label": "Effect" } }
+    ],
+    "edges":[
+        { "data": { "id": "ab", "source": "a", "target": "b" } }
+    ]
+}

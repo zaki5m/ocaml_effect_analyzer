@@ -1,9 +1,13 @@
 {
-    "nodes":[
-        { "data": { "id": "a", "name": "Increment", "label": "Effect" } },
-        { "data": { "id": "b", "name": "Increment", "label": "Effect" } }
-    ],
-    "edges":[
-        { "data": { "id": "ab", "source": "a", "target": "b" } }
-    ]
+  "nodes": [
+    { "data": { "id": "1", "name": "Decrement", "label": "Effect" } },
+    { "data": { "id": "0", "name": "Increment", "label": "Effect" } },
+    { "data": { "id": "2", "name": "", "label": "Effect" } },
+    { "data": { "id": "3", "name": "Increment", "label": "Effect" } }
+  ],
+  "edges": [
+    { "data": { "id": "-2", "source": "2", "target": "1" } },
+    { "data": { "id": "-1", "source": "2", "target": "0" } },
+    { "data": { "id": "-3", "source": "3", "target": "2" } }
+  ]
 }
