@@ -370,13 +370,6 @@ let main () =
   List.iter (fun (function_info, perform_lst) ->
         Printf.printf "function_name: %s\n" (fst function_info);
         print_endline (efNameTreeWithId_to_string (fst perform_lst));) result;
-  List.iter (fun (function_info, (nodes, edes)) ->
-        Printf.printf "function_name: %s\n" (fst function_info);
-        List.iter (fun (a, b) -> Printf.printf "[node: %d, %s] " a b) nodes;
-        print_endline "";
-        List.iter (fun (a,b) -> Printf.printf "[edge: %d, %d] " a b) edes;
-        print_endline "";
-        ) result2;
   ()
 
 (* let main () =

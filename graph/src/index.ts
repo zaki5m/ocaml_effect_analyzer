@@ -22,7 +22,7 @@ const style: cytoscape.Stylesheet[] = [
 ];
 
 const layout = {
-    name: 'grid',
+    name: 'preset',
 };
 
 cytoscape({

@@ -43,23 +43,30 @@ let get_id = function
 
 (* nodeとedgeのlistに分ける *)
 (* 返り値はnode, edgeタプル *)
-let split_node_edge (tree: efNameTreeWithId) : ((int * string) list * (int * int)  list) =
-  let rec loop tree node edge = match tree with 
+let split_node_edge (tree: efNameTreeWithId) : (((int * string) * (int * int)) list * (int * int)  list) =
+  let rec loop tree node edge x y = match tree with 
       | LeafWithId _ -> (node, edge)
       | NodeWithId (name, children, id) -> 
-        let node' = (id, (get_name name)) :: node in
+        let now_y = ref y in 
+        let node' = ((id, (get_name name)), (x, y)) :: node in
         let edge' = List.fold_left (fun acc child -> (id, get_id child) :: acc) edge children in
-        List.fold_left (fun (node, edge) child -> loop child node edge) (node', edge') children
+        now_y := !now_y - 100;
+        List.fold_left (fun (node, edge) child -> now_y := !now_y + 100; loop child node edge (x + 100) !now_y) (node', edge') children 
   in
-  loop tree [] []
+  loop tree [] [] 100 100
 
 (* nodeをjsonに変換する *)
-let node_to_json (node: (int * string)) = 
+let node_to_json (node: (int * string)) (position: (int * int)) = 
   let (id, name) = node in
-  let id = string_of_int id in
+  let (x, y) = position in
+  let id =  string_of_int id in
   `Assoc [ ("data", 
     `Assoc [("id", `String id); ("name", `String name); ("label", `String "Effect")]
-  )]
+  );
+  ("position", 
+    `Assoc [("x", `Int x); ("y", `Int y)]
+  )
+  ]
 
 (* edgeをjsonに変換する *)
 let edge_to_json (edge: (int * int)) = 
@@ -73,15 +80,15 @@ let edge_to_json (edge: (int * int)) =
   )]
 
 (* nodeのリストをjsonに変換する *)
-let nodes_to_json (nodes: (int * string) list) = 
-  `List (List.map node_to_json nodes)
+let nodes_to_json (nodes: ((int * string) * (int * int)) list) = 
+  `List (List.map (fun (node, position) -> node_to_json node position) nodes)
 
 (* edgeのリストをjsonに変換する *)
 let edges_to_json (edges: (int * int) list) = 
   `List (List.map edge_to_json edges)
 
 (* (nodes, edegs)をjsonに変換する *)
-let effect_row_to_json (nodes: (int * string) list) (edges: (int * int) list) = 
+let effect_row_to_json (nodes: ((int * string) * (int * int)) list) (edges: (int * int) list) = 
   `Assoc [("nodes", nodes_to_json nodes); ("edges", edges_to_json edges)]
 
 (* jsonをelements.jsonに書き込み *)
