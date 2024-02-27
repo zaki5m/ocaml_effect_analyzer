@@ -9,10 +9,11 @@ let change_handler (tree: efNameTree) (handler: efNameOfHandler list) local_var_
     | Leaf -> Leaf
     | Node (efName, []) -> Node (efName, [ret_tree])
     | Node (efName, tmp_tree_lst) -> (match efName with
-      | EffectName name -> 
-        let result = List.find_opt (fun (tmp_name, _) -> name = tmp_name) effect_lst in
+      | EffectName (name, _, _) -> 
+        (* tmp_tree_lstが継続 *)
+        let result = List.find_opt (fun (tmp_name, _, _) -> name = tmp_name) effect_lst in
         (match result with
-        | Some (_, tmp_tree) -> 
+        | Some (_, tmp_tree, _) -> 
           let tmp_tree = analyze_handler_serch_continue tmp_tree in
           (match tmp_tree with
           | Some tree ->
@@ -109,7 +110,7 @@ let rec change_tree_to_concrete (tree: efNameTree) (arg_lst: (localVar * localVa
     | FunctionName (name, handler, current_eval, tmp_arg_lst) -> 
       let new_current_eval = change_env_to_concrete current_eval arg_lst in
       Node (FunctionName (name, handler, new_current_eval, tmp_arg_lst), List.map (fun tree -> change_tree_to_concrete tree arg_lst) lst)
-    | EffectName name -> Node (EffectName name, List.map (fun tree -> change_tree_to_concrete tree arg_lst) lst)
+    | EffectName (name, local_var_lst, _) -> Node (EffectName (name, local_var_lst, []), List.map (fun tree -> change_tree_to_concrete tree arg_lst) lst)
     | Empty -> Node (Empty, List.map (fun tree -> change_tree_to_concrete tree arg_lst) lst)
     
 
@@ -147,7 +148,7 @@ let change_efName (exp_lst: (((string * int) * efNameTree * localVar list) * boo
         | _ -> 
           (Leaf, [], []), false) (* ユーザ定義でない関数からはeffectのperformはないものとして考える *)
       )
-  | EffectName name -> ((Node (EffectName name, []), [], []),  false)
+  | EffectName (name, local_var_lst, _) -> ((Node (EffectName (name, local_var_lst, []), []), [], []),  false)
   | Empty -> ((Leaf, [], []),  false)
 
 (* handler内の解析を行う *)
@@ -177,12 +178,12 @@ let rec change_handler_inside exp_lst handler local_var_lst  =
           (Some (add_efName_tree_list efName new_tree_lst), used_args)  
   in
   let effect_tree = 
-    List.filter_map (fun (name, tree) -> 
+    List.filter_map (fun (name, tree, local_var_lst) -> 
       let result = loop tree in 
       match result with 
         | Some tree, tmp_used_args -> 
           used_args := tmp_used_args || !used_args;
-          Some (name, tree)
+          Some (name, tree, local_var_lst)
         | None, _ -> None
     ) 
     effect_tree in
@@ -206,6 +207,7 @@ let rec change_handler_inside exp_lst handler local_var_lst  =
 let rec change_efNameTree (exp_lst: (((string * int)* efNameTree * localVar list) * bool ) list) tree local_var_lst : (efNameTree option * bool)  = match tree with
   | Leaf -> (None, false)
   | Node (name, lst) -> 
+    (* lstが継続 *)
     let ((efName, handler, rest_local_var), used_args) = change_efName exp_lst name local_var_lst in
     (* handlerの解析はあとで行う *)
     let (efName, new_used_args) = 

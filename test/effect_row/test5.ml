@@ -9,9 +9,9 @@ let function_call_test =
   let first = List.hd result in
   let expect_first_node = 
     Node (Empty, 
-      [Node (EffectName "Increment", 
+      [Node (EffectName ("Increment", [], []), 
         [Node (Empty, 
-          [Node (EffectName "Increment", []); Node (EffectName "Decrement", [])])
+          [Node (EffectName ("Increment", [], []), []); Node (EffectName ("Decrement", [], []), [])])
         ])
       ]) 
   in
@@ -20,12 +20,12 @@ let function_call_test =
   let expect_second_node = 
     Node (Empty, 
       [Node (Empty, 
-        [Node (EffectName "Increment", 
+        [Node (EffectName ("Increment", [], []), 
           [Node (Empty, 
             [Node (Empty,
               [Node (Empty,
-                [Node (EffectName "Increment", []);
-                Node (EffectName "Decrement", [])
+                [Node (EffectName ("Increment", [], []), []);
+                Node (EffectName ("Decrement", [], []), [])
                 ])
               ])
             ])

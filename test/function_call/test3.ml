@@ -7,13 +7,13 @@ let function_call_test =
   let result = parse_test_ocaml_file file in
   assert (List.length result = 3);
   let first = List.hd result in
-  let expect_first_node = Node (Empty, [Node (EffectName "Increment",[])]) in 
+  let expect_first_node = Node (Empty, [Node (EffectName ("Increment", [ArgsVar ("acc", Leaf)], [ArgVar "acc"]),[])]) in 
   assert (first = (("sum_up", 1), expect_first_node, [ArgsVar ("acc", Leaf)]));
   let second = List.hd (List.tl result) in
   let expect_handler = 
     [Retc (Node (FunctionName ("unknown", [], [ArgsVar ("_", Leaf); ArgsVar ("()", Leaf)], [ArgValue]), []));
     Exnc [("_", Node (FunctionName ("raise", [], [ArgsVar ("e", Leaf); ArgsVar ("()", Leaf)], [ArgVar "e"]), []))]; 
-    Effc [("_", Node (Empty, [])); ("Increment", Node (Empty, [Node (FunctionName ("continue", [], [ArgsVar ("k", Leaf); ArgsVar ("eff", Leaf); ArgsVar ("()", Leaf)], [ArgVar "k"; ArgVar "s"]), [])]))]
+    Effc [("_", Node (Empty, []), []); ("Increment", Node (Empty, [Node (FunctionName ("continue", [], [ArgsVar ("k", Leaf); ArgsVar ("eff", Leaf); ArgsVar ("()", Leaf)], [ArgVar "k"; ArgVar "s"]), [])]), [ArgsVar ("k", Leaf)])]
     ] 
   in
   let (_, second_tree, _) = second in

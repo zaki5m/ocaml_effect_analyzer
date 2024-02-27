@@ -7,7 +7,12 @@ let function_call_test =
   let result = parse_test_ocaml_file file in
   assert (List.length result = 3);
   let first = List.hd result in
-  let expect_first_node = Node (Empty, [Node (EffectName "Increment",[Node (EffectName "Increment", [])])]) in
+  let expect_first_node = 
+    Node (Empty, 
+      [Node (EffectName ("Increment", [ArgsVar ("acc", Leaf)], [ArgVar "acc"]),
+        [Node (EffectName ("Increment", [LocalVar ("tmp", [], Leaf); ArgsVar ("acc", Leaf)], [ArgVar "tmp"]), [])])
+      ]) 
+  in
   let (_, first_tree, _) = first in
   print_endline (efNameTree_to_string first_tree);
   assert (first = (("sum_up", 1), expect_first_node, [ArgsVar ("acc", Leaf)]));
@@ -16,14 +21,14 @@ let function_call_test =
     [
       Retc Leaf;
       Exnc [("_", Node (FunctionName ("raise", [], [ArgsVar ("e", Leaf); ArgsVar ("a", Leaf); ArgsVar ("()", Leaf)], [ArgVar "e"]), []))]; 
-      Effc [("_", Node (Empty, [])); ("Increment", Node (Empty, [Node (FunctionName ("continue", [], [ArgsVar ("k", Leaf); ArgsVar ("eff", Leaf); ArgsVar ("a", Leaf); ArgsVar ("()", Leaf)], [ArgVar "k"; ArgVar "s"]), [])]))]; 
+      Effc [("_", Node (Empty, []), []); ("Increment", Node (Empty, [Node (FunctionName ("continue", [], [ArgsVar ("k", Leaf); ArgsVar ("eff", Leaf); ArgsVar ("a", Leaf); ArgsVar ("()", Leaf)], [ArgVar "k"; ArgVar "s"]), [])]), [ArgsVar ("k", Leaf)])]; 
     ] 
   in
   let expect_handler = 
     [
       Retc (Node (FunctionName ("sum_up", expect_inside_handler, [ArgsVar ("a", Leaf); ArgsVar ("()", Leaf)], [ArgVar "a"]), []));
       Exnc [("_", Node (FunctionName ("raise", [], [ArgsVar ("e", Leaf); ArgsVar ("()", Leaf)], [ArgVar "e"]), []))]; 
-      Effc [("_", Node (Empty, [])); ("Increment", Node (Empty, [Node (FunctionName ("continue", [], [ArgsVar ("k", Leaf); ArgsVar ("eff", Leaf); ArgsVar ("()", Leaf)], [ArgVar "k"; ArgVar "s"]), [])]))]
+      Effc [("_", Node (Empty, []), []); ("Increment", Node (Empty, [Node (FunctionName ("continue", [], [ArgsVar ("k", Leaf); ArgsVar ("eff", Leaf); ArgsVar ("()", Leaf)], [ArgVar "k"; ArgVar "s"]), [])]), [ArgsVar ("k", Leaf)])]
     ] 
   in
   let expect_second_node = Node (Empty, [Node (FunctionName ("sum_up", expect_handler, [ArgsVar ("()", Leaf)], [ArgValue]), [])]) in

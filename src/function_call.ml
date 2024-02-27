@@ -107,12 +107,17 @@ let rec find_perform_in_expr ?(is_perform_name = false) is_patern_search expr (l
     Printf.printf "construct found: %s\n" (Pprintast.string_of_expression expr);
     Printf.printf "is_perform_name: %b\n" is_perform_name;
     Printf.printf "name: %s\n" (extract_ident_from_construct name );
-    let (new_tree_lst, _) = find_perform_in_expr is_patern_search expr1 local_var_lst in
+    let (new_tree_lst, tmp_local_var_lst) = find_perform_in_expr is_patern_search expr1 local_var_lst in
     if is_perform_name then 
-      let new_tree_lst = append_efNameTree new_tree_lst (Node (EffectName (extract_ident_from_construct name), [])) in 
-      (new_tree_lst, local_var_lst)
+      if new_tree_lst = [] then 
+        let args = args_analys_expr expr1 in
+        let new_tree_lst = [(Node (EffectName ((extract_ident_from_construct name), local_var_lst, [args]), [])) ]in 
+        (new_tree_lst, local_var_lst)
+      else
+        let new_tree_lst = append_efNameTree new_tree_lst (Node (EffectName ((extract_ident_from_construct name), local_var_lst, []), [])) in 
+        (new_tree_lst, local_var_lst)
     else
-      (new_tree_lst, local_var_lst)
+      (new_tree_lst, tmp_local_var_lst)
   | Pexp_variant (_, Some expr1) ->
     (* バリアントの場合は引数をトラバースする *)
     Printf.printf "variant found: %s\n" (Pprintast.string_of_expression expr);
@@ -205,13 +210,17 @@ and find_perform_in_cases is_patern_search cases local_var_lst :efNameTree list 
   | Exception -> []
   | Other -> 
     let tmp_perform_lst = List.fold_left (fun lst case -> ((find_perform_in_case case local_var_lst)) @ lst) [] cases in
+    let tmp_perform_lst = List.map (fun (name, tree, _) -> (name, tree) ) tmp_perform_lst in
     let tmp_perform_lst = remove_duplicate_case tmp_perform_lst [] in
     let tree_lst = List.map (fun (_, tree) -> tree) tmp_perform_lst in
     tree_lst
-and find_perform_in_case case local_var_lst :(string * efNameTree) list =
+and find_perform_in_case case local_var_lst :(string * efNameTree * localVar list) list =
   (* ガードは未対応 *)
   let pattern_lst: string list = find_perform_in_pattern case.pc_lhs [] in
-  let tmp_perform_lst = List.map (fun name -> (name, Node (Empty , (fst (find_perform_in_expr Other case.pc_rhs local_var_lst))))) pattern_lst in
+  let tmp_perform_lst = 
+    List.map (fun name -> let (tmp_tree_lst, tmp_local_var) = find_perform_in_expr Other case.pc_rhs local_var_lst in 
+    Printf.printf "new_local_var %s\n" ((List.fold_left (fun str a -> str ^ local_var_to_string a) "" tmp_local_var));
+    create_localVar_from_effect name  tmp_local_var local_var_lst (Node (Empty , tmp_tree_lst))) pattern_lst in
   tmp_perform_lst
 and find_perform_in_value_binding is_patern_search vb local_var_lst: (efNameTree list * localVar list) =
   Printf.printf "find_perform_in_value_binding is_patern_search: %s\n" (Pprintast.string_of_expression vb.pvb_expr);
@@ -361,7 +370,7 @@ let effect_row_test filename =
         print_endline (efNameTree_to_string perform_lst);) result2;
   () *)
 
-let main () = 
+(* let main () = 
   let result = effect_row_test Sys.argv.(1) in
   let result = List.map (fun (function_info, tree) -> (function_info, add_id_to_efNameTree tree 0)) result in
   let result2 = List.map (fun (function_info, (tree, _)) -> (function_info, split_node_edge tree)) result in
@@ -370,11 +379,11 @@ let main () =
   List.iter (fun (function_info, perform_lst) ->
         Printf.printf "function_name: %s\n" (fst function_info);
         print_endline (efNameTreeWithId_to_string (fst perform_lst));) result;
-  ()
-
-(* let main () =
-  parse_ocaml_file Sys.argv.(1);
   () *)
+
+let main () =
+  parse_ocaml_file Sys.argv.(1);
+  ()
 
 (* 型チェックの実行 *)
 (* let type_check ast =

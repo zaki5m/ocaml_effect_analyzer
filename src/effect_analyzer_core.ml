@@ -1,10 +1,10 @@
 (* 関数名かエフェクト名かの区別を行う *)
 type efName = 
   | FunctionName of string * efNameOfHandler list * localVar list * arg list 
-  | EffectName of string
+  | EffectName of string * localVar list * arg list
   | Empty
 and efNameOfHandler = 
-  | Effc of (string * efNameTree) list (* エフェクト名とそれをcatchした時のefName list *)
+  | Effc of (string * efNameTree * localVar list) list (* エフェクト名とそれをcatchした時のefName list, local_var_lstは引数 *)
   | Exnc of (string * efNameTree) list (* exception名とそれをcatchした時のefName list *)
   | Retc of efNameTree (* 正常にフローを抜けた時のefName list *)
 and efNameTree = (* 木構造を表現するためのデータ構造 *)

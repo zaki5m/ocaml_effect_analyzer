@@ -119,7 +119,7 @@ let efNameOfHandler_list_from_efName_list (efName_tree: efNameTree) pattern =
     | Some efName -> efName
     | None -> 
       match pattern with
-      | Effect -> [Effc [("_", efName_tree)]]
+      | Effect -> [Effc [("_", efName_tree, [])]]
       | Exception -> [Exnc [("_", efName_tree)]]
       | Other -> [Retc efName_tree]
   in
@@ -202,6 +202,30 @@ let create_localVar (function_name: string) (tmp_local_var_lst: localVar list) (
     let local_var = LocalVar (function_name, args_lst, (Node (Empty, tree))) in
     Some local_var
 
+(* effect名とlocal_var_lstからlocalVarを作成する関数 *)
+let create_localVar_from_effect (effect_name: string) (tmp_local_var_lst: localVar list) (pre_local_var_lst: localVar list) (tree: efNameTree) = 
+  let length_diff = List.length tmp_local_var_lst - List.length pre_local_var_lst in
+  let rec loop i lst args_lst = 
+    if i = 0 then 
+      args_lst
+    else
+      match lst with
+      | [] -> args_lst
+      | head :: rest -> ( match head with 
+        | ArgsVar (_, _) -> 
+          let args_lst = head :: args_lst in
+          loop (i-1) rest args_lst
+        | _ -> args_lst
+      ) 
+  in
+  (* 引数のリストを取り出す *)
+  let args_lst = loop length_diff tmp_local_var_lst [] in
+  if args_lst = [] then
+    (effect_name, tree, [])
+  else
+    (effect_name, tree, args_lst)
+
+(* パターンマッチのケースを解析する *)
 
 (* localVar listから変数名が一致するものを探して取り出す関数 *)
 let rec find_local_var (name: string) (current_eval: localVar list) = match current_eval with
@@ -219,9 +243,9 @@ let rec handler_lst_analyze lst effect_lst exception_lst ret_lst = match lst wit
     | Retc ret_lst -> handler_lst_analyze tl effect_lst exception_lst ret_lst)
 
 let any_exist_wildcard effect_lst = 
-  let result = List.find_opt (fun (name, _) -> name = "_") effect_lst in
+  let result = List.find_opt (fun (name, _, _) -> name = "_") effect_lst in
   match result with
-  | Some (_, ef_lst) -> ef_lst
+  | Some (_, ef_lst, _) -> ef_lst
   | None -> Leaf
 
 let rec analyze_handler_serch_continue tree = match tree with

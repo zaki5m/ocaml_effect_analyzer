@@ -7,21 +7,21 @@ let function_call_test =
   let result = effect_row_test file in
   assert (List.length result = 3);
   let first = List.hd result in
-  let expect_first_node = Node (Empty, [Node (EffectName "Increment", [Node (EffectName "Increment", [])])]) in
+  let expect_first_node = Node (Empty, [Node (EffectName ("Increment", [], []), [Node (EffectName ("Increment", [], []), [])])]) in
   assert (first = (("sum_up", 1), expect_first_node));
   let second = List.hd (List.tl result) in
   let expect_second_node = 
     Node (Empty, 
       [Node (Empty, 
-        [Node (EffectName "Increment", 
+        [Node (EffectName ("Increment", [], []), 
           [Node (Empty, 
             [Node (Empty,
-              [Node (EffectName "Increment", 
+              [Node (EffectName ("Increment", [], []), 
                 [Node (Empty, 
-                  [Node (EffectName "Increment", 
+                  [Node (EffectName ("Increment", [], []), 
                     [Node (Empty, 
                       [Node (Empty,
-                        [Node (EffectName "Increment", [])
+                        [Node (EffectName ("Increment", [], []), [])
                         ])
                       ])
                     ])
@@ -40,15 +40,15 @@ let function_call_test =
     Node (Empty, 
       [Node (Empty,
         [Node (Empty, 
-          [Node (EffectName "Increment", 
+          [Node (EffectName ("Increment", [], []), 
             [Node (Empty, 
               [Node (Empty, 
-                [Node (EffectName "Increment", 
+                [Node (EffectName ("Increment", [], []), 
                   [Node (Empty, 
-                    [Node (EffectName "Increment", 
+                    [Node (EffectName ("Increment", [], []), 
                       [Node (Empty, 
                         [Node (Empty, 
-                          [Node (EffectName "Increment", [])
+                          [Node (EffectName ("Increment", [], []), [])
                           ])
                         ])
                       ])

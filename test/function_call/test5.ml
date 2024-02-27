@@ -9,9 +9,9 @@ let function_call_test =
   let first = List.hd result in
   let expect_first_node =
     Node (Empty, 
-      [Node (EffectName "Increment", 
+      [Node (EffectName ("Increment", [ArgsVar ("acc", Leaf)], [ArgVar "acc"]), 
         [Node (FunctionName ("=", [], [LocalVar ("tmp", [], Leaf); ArgsVar ("acc", Leaf)], [ArgVar "tmp"; ArgValue]),
-          [Node (EffectName "Increment", []); Node (EffectName "Decrement", [])])
+          [Node (EffectName ("Increment", [LocalVar ("tmp", [], Leaf); ArgsVar ("acc", Leaf)], [ArgVar "tmp"]), []); Node (EffectName ("Decrement", [LocalVar ("tmp", [], Leaf); ArgsVar ("acc", Leaf)], [ArgVar "tmp"]), [])])
         ])
       ]) 
   in
@@ -21,9 +21,9 @@ let function_call_test =
     [
       Retc (Node (FunctionName ("unknown", [], [ArgsVar ("_", Leaf); ArgsVar ("()", Leaf)], [ArgValue]), []));
       Exnc [("_", Node (FunctionName ("raise", [], [ArgsVar ("e", Leaf); ArgsVar ("()", Leaf)], [ArgVar "e"]), []))];
-      Effc [("_", Node (Empty, [])); 
-            ("Decrement", Node (Empty, [Node (FunctionName ("continue", [], [ArgsVar ("k", Leaf); ArgsVar ("eff", Leaf); ArgsVar ("()", Leaf)], [ArgVar "k"; ArgVar "s"]), [])]));
-            ("Increment", Node (Empty, [Node (FunctionName ("continue", [], [ArgsVar ("k", Leaf); ArgsVar ("eff", Leaf); ArgsVar ("()", Leaf)], [ArgVar "k"; ArgVar "s"]), [])]))
+      Effc [("_", Node (Empty, []), []); 
+            ("Decrement", Node (Empty, [Node (FunctionName ("continue", [], [ArgsVar ("k", Leaf); ArgsVar ("eff", Leaf); ArgsVar ("()", Leaf)], [ArgVar "k"; ArgVar "s"]), [])]), [ArgsVar ("k", Leaf)]);
+            ("Increment", Node (Empty, [Node (FunctionName ("continue", [], [ArgsVar ("k", Leaf); ArgsVar ("eff", Leaf); ArgsVar ("()", Leaf)], [ArgVar "k"; ArgVar "s"]), [])]), [ArgsVar ("k", Leaf)])
           ] 
     ] 
   in

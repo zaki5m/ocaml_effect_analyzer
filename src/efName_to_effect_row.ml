@@ -9,10 +9,10 @@ let analyze_handler (tree: efNameTree) (handler: efNameOfHandler list) =
     | Leaf -> Leaf
     | Node (efName, []) -> Node (efName, [ret_tree])
     | Node (efName, tmp_tree_lst) -> (match efName with
-      | EffectName name -> 
-        let result = List.find_opt (fun (tmp_name, _) -> name = tmp_name) effect_lst in
+      | EffectName (name, _, _) -> 
+        let result = List.find_opt (fun (tmp_name, _, _) -> name = tmp_name) effect_lst in
         (match result with
-        | Some (_, tmp_tree) -> 
+        | Some (_, tmp_tree, _) -> 
           let tmp_tree = analyze_handler_serch_continue tmp_tree in
           (match tmp_tree with
           | Some tree ->
@@ -69,7 +69,7 @@ let analyze_efName (exp_lst: ((string * int) * efNameTree * localVar list) list)
         | _ ->
           Printf.printf "🥰name: %s\n" name;
           (Leaf, []))) (* ユーザ定義でない関数からはeffectのperformはないものとして考える *)
-  | EffectName name -> (Node (EffectName name, []), [])
+  | EffectName (name, _, _) -> (Node (EffectName (name, [], []), []), [])
   | Empty -> (Leaf, [])
 
 (* handler内の解析を行う *)
@@ -77,7 +77,8 @@ let rec analyze_handler_inside exp_lst handler local_var_lst =
   let (effect_tree, exception_tree, ret_tree) = handler_lst_analyze handler [] [] Leaf in
   let rec loop tree = match tree with
     | Leaf -> None
-    | Node (name, lst) -> 
+    | Node (name, lst) ->
+      (* lstが継続に当たる *) 
       let (efName, handler) = analyze_efName exp_lst name local_var_lst in
       let efName = 
         if List.length handler = 0 then efName
@@ -95,10 +96,10 @@ let rec analyze_handler_inside exp_lst handler local_var_lst =
           Some (add_efName_tree_list efName new_tree_lst)    
   in
   let effect_tree = 
-    List.filter_map (fun (name, tree) -> 
+    List.filter_map (fun (name, tree, local_var_lst) -> 
       let result = loop tree in 
       match result with 
-        | Some tree -> Some (name, tree)
+        | Some tree -> Some (name, tree, local_var_lst)
         | None -> None
     ) 
     effect_tree in

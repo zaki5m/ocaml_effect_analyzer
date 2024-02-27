@@ -33,7 +33,7 @@ and add_id_to_efNameTree (tree: efNameTree) (id: int) : (efNameTreeWithId * int)
 (* efNameから名前を出力する *)
 let get_name (efName: efName) : string = match efName with
   | FunctionName (name,_,_,_) -> name
-  | EffectName name -> name
+  | EffectName (name, _, _) -> name
   | Empty -> ""
 
 let get_id = function
@@ -45,13 +45,13 @@ let get_id = function
 (* 返り値はnode, edgeタプル *)
 let split_node_edge (tree: efNameTreeWithId) : (((int * string) * (int * int)) list * (int * int)  list) =
   let rec loop tree node edge x y = match tree with 
-      | LeafWithId _ -> (node, edge)
-      | NodeWithId (name, children, id) -> 
-        let now_y = ref y in 
-        let node' = ((id, (get_name name)), (x, y)) :: node in
-        let edge' = List.fold_left (fun acc child -> (id, get_id child) :: acc) edge children in
-        now_y := !now_y - 100;
-        List.fold_left (fun (node, edge) child -> now_y := !now_y + 100; loop child node edge (x + 100) !now_y) (node', edge') children 
+    | LeafWithId _ -> (node, edge)
+    | NodeWithId (name, children, id) -> 
+      let now_y = ref y in 
+      let node' = ((id, (get_name name)), (x, y)) :: node in
+      let edge' = List.fold_left (fun acc child -> (id, get_id child) :: acc) edge children in
+      now_y := !now_y - 100;
+      List.fold_left (fun (node, edge) child -> now_y := !now_y + 100; loop child node edge (x + 100) !now_y) (node', edge') children 
   in
   loop tree [] [] 100 100
 

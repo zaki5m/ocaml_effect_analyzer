@@ -2,11 +2,11 @@ open Printf
 open Effect_analyzer_core
 
 let rec handler_to_string (handler: efNameOfHandler) = match handler with
-  | Effc lst -> "Effc: " ^ List.fold_left (fun str (name, tmp_lst) -> str ^ efNameOfHandler_to_string name tmp_lst) "" lst
-  | Exnc lst -> "Exnc: " ^ List.fold_left (fun str (name, tmp_lst) -> str ^ efNameOfHandler_to_string name tmp_lst) "" lst
+  | Effc lst  -> "Effc: " ^ List.fold_left (fun str (name, tmp_lst, local_var_lst) -> str ^ efNameOfHandler_to_string name tmp_lst local_var_lst) "" lst
+  | Exnc lst -> "Exnc: " ^ List.fold_left (fun str (name, tmp_lst) -> str ^ efNameOfHandler_to_string name tmp_lst []) "" lst
   | Retc lst -> "Retc: " ^ efNameTree_to_string lst
-and efNameOfHandler_to_string (pattern: string) (efName_tree: efNameTree) :string =
-  "pattern: { " ^ pattern ^ " } \n" ^ efNameTree_to_string efName_tree
+and efNameOfHandler_to_string (pattern: string) (efName_tree: efNameTree) (local_var_lst: localVar list) :string =
+  "pattern: { " ^ pattern ^ " } \n" ^ efNameTree_to_string efName_tree ^ (List.fold_left (fun str a -> str ^ local_var_to_string a) "" local_var_lst)
 and handlers_to_string (handlers: efNameOfHandler list) =
   match handlers with
   | [] -> "]"
@@ -18,7 +18,7 @@ and efNameTree_to_string (efName_tree: efNameTree) :string =
 and efName_to_string (efName: efName) :string =
   match efName with
   | FunctionName (name,handler, local_var_lst,arg_lst)  -> "(" ^ name ^ " { " ^ List.fold_left (fun str arg -> str ^ arg_to_string arg) "" arg_lst ^ " } " ^ " , [ " ^ (handlers_to_string handler) ^ " || " ^ List.fold_left (fun str a -> str ^ local_var_to_string a) "" local_var_lst ^ ")"
-  | EffectName name -> name
+  | EffectName (name, local_var_lst, arg_lst) -> name ^ " { " ^ List.fold_left (fun str arg -> str ^ arg_to_string arg) "" arg_lst ^ " } " ^ " || " ^ List.fold_left (fun str a -> str ^ local_var_to_string a) "" local_var_lst
   | Empty -> "Empty"
 and efName_list_to_string efName_list =
   match efName_list with
