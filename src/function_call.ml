@@ -271,6 +271,9 @@ and analyze_handler handler_record local_var_lst = match handler_record.pexp_des
       loop rest (new_handler@handler)
   in
   loop fields []
+  (* let handler = loop fields [] in 
+  (* deepのみの対応にしているため，全てのcontinueに対してhandlerを付与している *)
+  add_continue_handler handler *)
   | _ -> []
 (* 引数のexprを解析して適切な形に変換する *)
 and args_analys_expr expr = match expr.pexp_desc with
@@ -346,7 +349,16 @@ let parse_test_ocaml_file filename =
 
 let effect_row_test filename = 
   let parsed_file = parse_test_ocaml_file filename in 
-  let result = function_call_to_mid_call_flow [] (parsed_file) in
+  let result = List.map (fun (function_info, tree, local_var_lst) -> (function_info, add_id_to_efNameTree tree 0, local_var_lst)) parsed_file in
+  List.iter (fun (function_info, perform_lst, _) ->
+    Printf.printf "pre_function_name: %s\n" (fst function_info);
+    print_endline (efNameTreeWithId_to_string (fst perform_lst));) result;
+  let result = List.map (fun (function_info, tree, local_var_lst) -> (function_info, tree, local_var_lst)) result in
+  let result = function_call_to_mid_call_flow [] result in
+  List.iter (fun (function_info, perform_lst, _) ->
+    Printf.printf "result_function_name: %s\n" (fst function_info);
+    print_endline (efNameTreeWithId_to_string perform_lst);) result;
+  let result = List.map (fun (function_info, tree, local_var_lst) -> (function_info, remove_id_from_tree tree, local_var_lst)) result in
   let result = analyze_function_call [] result in
   result 
 
@@ -370,20 +382,21 @@ let effect_row_test filename =
         print_endline (efNameTree_to_string perform_lst);) result2;
   () *)
 
-(* let main () = 
+let main () = 
   let result = effect_row_test Sys.argv.(1) in
   let result = List.map (fun (function_info, tree) -> (function_info, add_id_to_efNameTree tree 0)) result in
   let result2 = List.map (fun (function_info, (tree, _)) -> (function_info, split_node_edge tree)) result in
-  let (_, (nodes, edegs)) = List.hd result2 in
+  let len = List.length result2 in
+  let (_, (nodes, edegs)) = List.nth result2 (len-1) in
   let _ = write_json (effect_row_to_json nodes edegs) "./graph/src/elements.json" in
   List.iter (fun (function_info, perform_lst) ->
         Printf.printf "function_name: %s\n" (fst function_info);
         print_endline (efNameTreeWithId_to_string (fst perform_lst));) result;
-  () *)
-
-let main () =
-  parse_ocaml_file Sys.argv.(1);
   ()
+
+(* let main () =
+  parse_ocaml_file Sys.argv.(1);
+  () *)
 
 (* 型チェックの実行 *)
 (* let type_check ast =

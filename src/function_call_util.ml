@@ -134,7 +134,7 @@ let rec add_efName_tree (tree: efNameTree) (append_tree: efNameTree) = match tre
 
 (* treeのLeafまで走査して，新たなNodeを追加する関数 (appendするのがlist version) *)
 let rec add_efName_tree_list (tree: efNameTree) (append_tree: efNameTree list) = match tree with
-  | Leaf -> Node (FunctionName ("unit", [], [], []), append_tree)
+  | Leaf -> Node (Empty, append_tree)
   | Node (efName, []) -> Node (efName, append_tree)
   | Node (efName, lst) -> Node (efName, List.map (fun new_tree -> add_efName_tree_list new_tree append_tree) lst)
 
@@ -145,7 +145,7 @@ let rec add_efName_tree_to_leaf (tree: efNameTree) (append_tree: efNameTree) = m
 
 (* treeのLeafにのみ新たなNodeを追加する関数 (appendするのがlist version) *)
 let rec add_efName_tree_list_to_leaf (tree: efNameTree) (append_tree: efNameTree list) = match tree with
-  | Leaf -> Node (FunctionName ("unit", [], [], []), append_tree)
+  | Leaf -> Node (Empty, append_tree)
   | Node (efName, lst) -> Node (efName, List.map (fun new_tree -> add_efName_tree_list_to_leaf new_tree append_tree) lst)
 
 (* efNameTreeのリストを結合する関数 *)
@@ -157,6 +157,41 @@ let append_efNameTree (tree_lst: efNameTree list) (append_tree: efNameTree) = ma
 let append_efNameTree_list (tree_lst: efNameTree list) (append_tree: efNameTree list) = match tree_lst with
   | [] -> append_tree
   | _ -> List.map (fun tree -> add_efName_tree_list tree append_tree) tree_lst
+
+(*  --------efNameTreeWithId版--------- *)
+(* treeのLeafまで走査して，新たなNodeを追加する関数 *)
+let rec add_efName_tree_with_id (tree: efNameTreeWithId) (append_tree: efNameTreeWithId) = match tree with
+  | LeafWithId _ -> append_tree
+  | NodeWithId (efName, [], id) -> NodeWithId (efName, [append_tree], id)
+  | NodeWithId (efName, lst, id) -> NodeWithId (efName, List.map (fun new_tree -> add_efName_tree_with_id new_tree append_tree) lst, id)
+
+(* treeのLeafまで走査して，新たなNodeを追加する関数 (appendするのがlist version) *)
+let rec add_efName_tree_with_id_list (tree: efNameTreeWithId) (append_tree: efNameTreeWithId list) = match tree with
+  | LeafWithId id -> NodeWithId (Empty, append_tree, id)
+  | NodeWithId (efName, [], id) -> NodeWithId (efName, append_tree, id)
+  | NodeWithId (efName, lst, id) -> NodeWithId (efName, List.map (fun new_tree -> add_efName_tree_with_id_list new_tree append_tree) lst, id)
+
+(* treeのLeafにのみ新たなNodeを追加する関数 *)
+let rec add_efName_tree_with_id_to_leaf (tree: efNameTreeWithId) (append_tree: efNameTreeWithId) = match tree with
+  | LeafWithId _ -> append_tree
+  | NodeWithId (efName, lst, id) -> NodeWithId (efName, List.map (fun new_tree -> add_efName_tree_with_id_to_leaf new_tree append_tree) lst, id)
+
+(* treeのLeafにのみ新たなNodeを追加する関数 (appendするのがlist version) *)
+let rec add_efName_tree_with_id_list_to_leaf (tree: efNameTreeWithId) (append_tree: efNameTreeWithId list) = match tree with
+  | LeafWithId id -> NodeWithId (Empty, append_tree, id)
+  | NodeWithId (efName, lst, id) -> NodeWithId (efName, List.map (fun new_tree -> add_efName_tree_with_id_list_to_leaf new_tree append_tree) lst, id)
+
+(* efNameTreeのリストを結合する関数 *)
+let append_efNameTree_with_id (tree_lst: efNameTreeWithId list) (append_tree: efNameTreeWithId) = match tree_lst with
+  | [] -> [append_tree]
+  | _ -> List.map (fun tree -> add_efName_tree_with_id tree append_tree) tree_lst
+
+(* efNameTreeのリストを結合する関数 (list version) *)
+let append_efNameTree_with_id_list (tree_lst: efNameTreeWithId list) (append_tree: efNameTreeWithId list) = match tree_lst with
+  | [] -> append_tree
+  | _ -> List.map (fun tree -> add_efName_tree_with_id_list tree append_tree) tree_lst
+(*  --------efNameTreeWithId版--------- *)
+
 
 (* value binding listから関数名と引数の個数を取得する *)
 let extract_function_name_and_arg_num_from_vb_list vb_lst = match vb_lst with
@@ -251,10 +286,76 @@ let any_exist_wildcard effect_lst =
 let rec analyze_handler_serch_continue tree = match tree with
   | Leaf -> None
   | Node (efName, lst) -> (match efName with 
-    | FunctionName (name, tmp_handler, _, _) ->
+    | FunctionName (name, tmp_handler,  local_var_lst, arg_lst) ->
+      Printf.printf "arg_lst: %s\n" (List.fold_left (fun acc arg -> acc ^  arg_to_string arg) "" arg_lst);
+      Printf.printf "local_var_lst: %s\n" (List.fold_left (fun acc local_var -> acc ^  local_var_to_string local_var) "" local_var_lst);
       if name = "continue" then 
         Some Leaf
       else 
         Some (Node (efName, (List.filter_map (fun tree -> analyze_handler_serch_continue tree) lst)))
     | _ -> Some (Node (efName, (List.filter_map (fun tree -> analyze_handler_serch_continue tree) lst)))
   )
+
+let rec add_continue_efNameTree handler tree = match tree with 
+  | Leaf -> Leaf
+  | Node (efName, lst) -> (match efName with 
+    | FunctionName (name, _,  local_var_lst, arg_lst) ->
+      if name = "continue" then 
+        let new_efName = FunctionName (name, handler, local_var_lst, arg_lst) in
+        Node (new_efName, (List.map (fun tree -> add_continue_efNameTree handler tree) lst))
+      else 
+        Node (efName, (List.map (fun tree -> add_continue_efNameTree handler tree) lst))
+    | _ -> Node (efName, (List.map (fun tree -> add_continue_efNameTree handler tree) lst))
+  )
+
+let rec add_continue_effect_handler handler effect_handler = match effect_handler with
+  | [] -> []
+  | (name, tree, local_var_lst) :: tl -> 
+    (name, add_continue_efNameTree handler tree, local_var_lst):: add_continue_effect_handler handler tl
+
+
+(* Deep handler内のcontinueに対して同一のhandlerを付与する *)
+let add_continue_handler (handler: efNameOfHandler list) = 
+  let rec loop lst = match lst with
+    | [] -> []
+    | hd :: tl -> (match hd with
+      | Effc lst -> Effc (add_continue_effect_handler handler lst) :: loop tl
+      | _ -> hd :: loop tl
+    )
+  in
+  loop handler 
+
+(* treeにid(-1)を付与する *)
+let rec add_id_to_tree tree  = match tree with
+  | Leaf -> LeafWithId (-1)
+  | Node (efName, lst) -> NodeWithId (efName, List.map (fun tree -> add_id_to_tree tree) lst, -1)
+
+(* tree_with_idをtreeに戻す *)
+(* 多分この部分後で変更しないとダメな気がする *)
+let rec remove_id_from_tree tree_with_id = match tree_with_id with
+  | LeafWithId _ -> Leaf
+  | NodeWithId (efName, lst, _) -> Node (efName, List.map (fun tree -> remove_id_from_tree tree) lst)
+  | RecNodeWithId _ -> Node (Empty, [])
+
+(* treeにidを任意の数だけ追加する，また最大値の次の値を返す *)
+let add_id_to_tree_with_id tree add_id = 
+  let ref_max_id = ref 0 in
+  let rec loop tree = match tree with
+    | LeafWithId id -> 
+      if id > !ref_max_id then
+        ref_max_id := id;
+      LeafWithId (add_id + id)
+    | NodeWithId (efName, lst, id) -> 
+      if id > !ref_max_id then
+        ref_max_id := id;
+      NodeWithId (efName, List.map (fun tree -> loop tree) lst, add_id + id)
+    | RecNodeWithId id -> 
+      if id > !ref_max_id then
+        ref_max_id := id;
+      RecNodeWithId (add_id + id)
+  in
+  let result = loop tree in
+  if !ref_max_id <= 0 then
+    (result, add_id)
+  else
+    (result, !ref_max_id + add_id + 1)

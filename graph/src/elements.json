@@ -1,0 +1,13 @@
+{
+  "nodes": [
+    {
+      "data": { "id": "0", "name": "", "label": "Effect" },
+      "position": { "x": 200, "y": 100 }
+    },
+    {
+      "data": { "id": "1", "name": "Increment", "label": "Effect" },
+      "position": { "x": 100, "y": 100 }
+    }
+  ],
+  "edges": [ { "data": { "id": "-1", "source": "1", "target": "0" } } ]
+}

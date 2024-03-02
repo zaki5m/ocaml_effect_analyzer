@@ -51,7 +51,8 @@ let split_node_edge (tree: efNameTreeWithId) : (((int * string) * (int * int)) l
       let node' = ((id, (get_name name)), (x, y)) :: node in
       let edge' = List.fold_left (fun acc child -> (id, get_id child) :: acc) edge children in
       now_y := !now_y - 100;
-      List.fold_left (fun (node, edge) child -> now_y := !now_y + 100; loop child node edge (x + 100) !now_y) (node', edge') children 
+      List.fold_left (fun (node, edge) child -> now_y := !now_y + 100; loop child node edge (x + 100) !now_y) (node', edge') children
+    | _ -> failwith "error" 
   in
   loop tree [] [] 100 100
 

@@ -27,5 +27,4 @@ and arg =
 type efNameTreeWithId = 
   | NodeWithId of efName * efNameTreeWithId list * int
   | LeafWithId of int
-
-(* 木構造を表示するための関数 *)
+  | RecNodeWithId of int

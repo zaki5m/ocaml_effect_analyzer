@@ -14,7 +14,15 @@ let main f =
               s + 1)
       | _ -> None);
     exnc = (fun e -> raise e);
-    retc = (fun x -> f x)
+    retc = (fun x -> match_with f x
+    { effc = (fun (type c) (eff: c Effect.t) ->
+        match eff with
+        | Increment s -> Some (fun (k: (c,_) continuation) -> 
+                s + 1)
+        | _ -> None);
+      exnc = (fun e -> raise e);
+      retc = (fun x -> x)
+    })
   }
       
     

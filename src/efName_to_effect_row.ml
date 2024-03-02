@@ -12,7 +12,7 @@ let analyze_handler (tree: efNameTree) (handler: efNameOfHandler list) =
       | EffectName (name, _, _) -> 
         let result = List.find_opt (fun (tmp_name, _, _) -> name = tmp_name) effect_lst in
         (match result with
-        | Some (_, tmp_tree, _) -> 
+        | Some (_, tmp_tree, _) ->  
           let tmp_tree = analyze_handler_serch_continue tmp_tree in
           (match tmp_tree with
           | Some tree ->

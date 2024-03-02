@@ -29,3 +29,5 @@ setup.log
 _opam/
 
 *.txt
+
+src/typedtree_formatter.ml
