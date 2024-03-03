@@ -3,6 +3,7 @@ type efName =
   | FunctionName of string * efNameOfHandler list * localVar list * arg list 
   | EffectName of string * localVar list * arg list
   | Empty
+  | Root
 and efNameOfHandler = 
   | Effc of (string * efNameTree * localVar list) list (* エフェクト名とそれをcatchした時のefName list, local_var_lstは引数 *)
   | Exnc of (string * efNameTree) list (* exception名とそれをcatchした時のefName list *)

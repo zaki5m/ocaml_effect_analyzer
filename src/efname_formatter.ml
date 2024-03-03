@@ -20,6 +20,7 @@ and efName_to_string (efName: efName) :string =
   | FunctionName (name,handler, local_var_lst,arg_lst)  -> "(" ^ name ^ " { " ^ List.fold_left (fun str arg -> str ^ arg_to_string arg) "" arg_lst ^ " } " ^ " , [ " ^ (handlers_to_string handler) ^ " || " ^ List.fold_left (fun str a -> str ^ local_var_to_string a) "" local_var_lst ^ ")"
   | EffectName (name, local_var_lst, arg_lst) -> name ^ " { " ^ List.fold_left (fun str arg -> str ^ arg_to_string arg) "" arg_lst ^ " } " ^ " || " ^ List.fold_left (fun str a -> str ^ local_var_to_string a) "" local_var_lst
   | Empty -> "Empty"
+  | Root -> "Root"
 and efName_list_to_string efName_list =
   match efName_list with
   | [] -> "\n"
@@ -39,3 +40,4 @@ and efNameTreeWithId_to_string (efName_tree: efNameTreeWithId) :string =
   match efName_tree with
   | LeafWithId id -> "id: " ^ string_of_int id ^ " "
   | NodeWithId (efName, efName_tree_lst, id) -> "id: " ^ (string_of_int id) ^ " : " ^ efName_to_string efName ^ " -> (" ^ (List.fold_left (fun before a -> before ^ efNameTreeWithId_to_string a) "" efName_tree_lst) ^ ")"
+  | RecNodeWithId id -> "id: " ^ (string_of_int id) ^ " : RecNode"

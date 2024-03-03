@@ -164,22 +164,26 @@ let rec add_efName_tree_with_id (tree: efNameTreeWithId) (append_tree: efNameTre
   | LeafWithId _ -> append_tree
   | NodeWithId (efName, [], id) -> NodeWithId (efName, [append_tree], id)
   | NodeWithId (efName, lst, id) -> NodeWithId (efName, List.map (fun new_tree -> add_efName_tree_with_id new_tree append_tree) lst, id)
+  | RecNodeWithId id -> RecNodeWithId id
 
 (* treeのLeafまで走査して，新たなNodeを追加する関数 (appendするのがlist version) *)
 let rec add_efName_tree_with_id_list (tree: efNameTreeWithId) (append_tree: efNameTreeWithId list) = match tree with
   | LeafWithId id -> NodeWithId (Empty, append_tree, id)
   | NodeWithId (efName, [], id) -> NodeWithId (efName, append_tree, id)
   | NodeWithId (efName, lst, id) -> NodeWithId (efName, List.map (fun new_tree -> add_efName_tree_with_id_list new_tree append_tree) lst, id)
+  | RecNodeWithId id -> RecNodeWithId id
 
 (* treeのLeafにのみ新たなNodeを追加する関数 *)
 let rec add_efName_tree_with_id_to_leaf (tree: efNameTreeWithId) (append_tree: efNameTreeWithId) = match tree with
   | LeafWithId _ -> append_tree
   | NodeWithId (efName, lst, id) -> NodeWithId (efName, List.map (fun new_tree -> add_efName_tree_with_id_to_leaf new_tree append_tree) lst, id)
+  | RecNodeWithId id -> RecNodeWithId id
 
 (* treeのLeafにのみ新たなNodeを追加する関数 (appendするのがlist version) *)
 let rec add_efName_tree_with_id_list_to_leaf (tree: efNameTreeWithId) (append_tree: efNameTreeWithId list) = match tree with
   | LeafWithId id -> NodeWithId (Empty, append_tree, id)
   | NodeWithId (efName, lst, id) -> NodeWithId (efName, List.map (fun new_tree -> add_efName_tree_with_id_list_to_leaf new_tree append_tree) lst, id)
+  | RecNodeWithId id -> RecNodeWithId id
 
 (* efNameTreeのリストを結合する関数 *)
 let append_efNameTree_with_id (tree_lst: efNameTreeWithId list) (append_tree: efNameTreeWithId) = match tree_lst with
@@ -359,3 +363,102 @@ let add_id_to_tree_with_id tree add_id =
     (result, add_id)
   else
     (result, !ref_max_id + add_id + 1)
+
+(* treeの中の最大値の次の値(next_id)の検索 *)
+let search_next_id tree =
+  let ref_max_id = ref 0 in
+  let rec loop tree = match tree with
+    | LeafWithId id -> 
+      if id > !ref_max_id then
+        ref_max_id := id
+    | NodeWithId (efName, lst, id) -> 
+      if id > !ref_max_id then
+        ref_max_id := id
+      else
+        List.iter (fun tree -> loop tree) lst
+    | RecNodeWithId id -> 
+      if id > !ref_max_id then
+        ref_max_id := id
+  in
+  loop tree;
+  !ref_max_id + 1
+
+(*  *)
+
+(* LeafとEmptyを削除したTreeWithIdを再構築 *)
+let rec remove_empty_from_tree_with_id tree = match tree with
+  | LeafWithId _ -> LeafWithId (-1)
+  | NodeWithId (efName, lst, id) -> 
+    let not_leaf_lst = List.filter (fun tree -> 
+      match tree with
+      | LeafWithId _ -> false
+      | _ -> true
+       ) lst in 
+    let (empty_lst, not_empty_lst) = List.partition (fun tree -> 
+      match tree with
+      | NodeWithId (efName, _, _) -> 
+        (match efName with
+          | Empty -> true
+          | _ -> false
+        )
+      | _ -> false
+       ) not_leaf_lst in
+    let new_not_empty_lst = List.map (fun tree -> remove_empty_from_tree_with_id tree) not_empty_lst in
+    let new_empty_lst = List.fold_left (fun tmp_lst tree -> (
+      match tree with
+      | NodeWithId (_, lst, _) -> lst @ tmp_lst
+      | _ -> tmp_lst
+    )) [] empty_lst in
+    let new_empty_lst = List.map (fun tree -> remove_empty_from_tree_with_id tree) new_empty_lst in
+    NodeWithId (efName, new_empty_lst @ new_not_empty_lst, id)
+  | RecNodeWithId id -> RecNodeWithId id
+
+(* TrreWithIdから後続のlstを取得する関数 *)
+let get_lst_from_tree_with_id tree = match tree with
+  | NodeWithId (_, lst, _) -> lst
+  | _ -> []
+
+
+(* RecNodeが指すidのリストを返す関数 *)  
+let rec search_rec_id tree = match tree with
+  | LeafWithId _ -> []
+  | NodeWithId (_, lst, _) -> 
+    let rec_id_lst = List.fold_left (fun tmp_lst tree -> (
+      match tree with
+      | RecNodeWithId id -> id :: tmp_lst
+      | NodeWithId (_, lst, _) -> lst |> List.fold_left (fun tmp_lst tree -> tmp_lst @ (search_rec_id tree)) tmp_lst
+      | _ -> tmp_lst
+    )) [] lst in
+    rec_id_lst
+  | RecNodeWithId id -> [id]
+
+(* RecNodeがないRootを全て削除する関数 *)
+let remove_rec_node_from_tree tree = 
+  let id_lst = search_rec_id tree in
+  let initial = ref true in 
+  let rec loop tree = 
+    match tree with
+    | NodeWithId (efName, lst, id) -> 
+      if List.exists (fun tmp_id -> tmp_id = id) id_lst || !initial then
+        (initial := false;
+        Some (NodeWithId (efName, loop2 lst, id)))
+      else
+        (match efName with
+          | Empty -> None
+          | Root -> None
+          | _ -> Some (NodeWithId (efName, loop2 lst, id))
+        )
+    | LeafWithId _ -> None
+    | RecNodeWithId id -> Some (RecNodeWithId id)
+  and loop2 tree_lst = match tree_lst with
+    | [] -> []
+    | hd :: tl -> (match loop hd with
+      | Some tree -> tree :: loop2 tl
+      | None -> 
+        let lst = get_lst_from_tree_with_id hd in
+        loop2 lst @ loop2 tl
+    )
+  in
+  match loop tree with 
+  | Some tree -> tree
+  | None -> LeafWithId (-1)

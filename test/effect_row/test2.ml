@@ -4,5 +4,6 @@ open Function_call__Effect_analyzer_core
 let file = "../../../../test/ocaml_code/test2.ml"
 let function_call_test = 
   let result = effect_row_test file in
+  Printf.printf "result: %d\n" (List.length result);
   assert (List.length result = 0);
   print_endline "function_call_test <test2> passed"

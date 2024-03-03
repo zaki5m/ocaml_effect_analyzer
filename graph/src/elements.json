@@ -1,13 +1,26 @@
 {
   "nodes": [
     {
-      "data": { "id": "0", "name": "", "label": "Effect" },
+      "data": { "id": "6", "name": "Decrement", "label": "Effect" },
+      "position": { "x": 300, "y": 200 }
+    },
+    {
+      "data": { "id": "4", "name": "Increment", "label": "Effect" },
+      "position": { "x": 300, "y": 100 }
+    },
+    {
+      "data": { "id": "8", "name": "", "label": "Effect" },
       "position": { "x": 200, "y": 100 }
     },
     {
-      "data": { "id": "1", "name": "Increment", "label": "Effect" },
+      "data": { "id": "1", "name": "", "label": "Effect" },
       "position": { "x": 100, "y": 100 }
     }
   ],
-  "edges": [ { "data": { "id": "-1", "source": "1", "target": "0" } } ]
+  "edges": [
+    { "data": { "id": "-1", "source": "6", "target": "8" } },
+    { "data": { "id": "-2", "source": "8", "target": "6" } },
+    { "data": { "id": "-3", "source": "8", "target": "4" } },
+    { "data": { "id": "-4", "source": "1", "target": "8" } }
+  ]
 }

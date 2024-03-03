@@ -305,7 +305,7 @@ let rec find_perform_expr_in_structure_item item =
     Printf.printf "tree_lst len: %d\n" (List.length tree_lst); *)
     let (tree_lst, local_var_lst) = find_perform_in_expr Other (List.hd value_bindings).pvb_expr [] in
     Printf.printf "local_var_lst len: %d\n" (List.length local_var_lst);
-    let tree = Node (Empty, tree_lst) in
+    let tree = Node (Root, tree_lst) in
     (* 引数の順番を正しいものに変更 *)
     Some (function_info, tree, (List.rev local_var_lst))
   | _ -> None
@@ -355,11 +355,14 @@ let effect_row_test filename =
     print_endline (efNameTreeWithId_to_string (fst perform_lst));) result;
   let result = List.map (fun (function_info, tree, local_var_lst) -> (function_info, tree, local_var_lst)) result in
   let result = function_call_to_mid_call_flow [] result in
-  List.iter (fun (function_info, perform_lst, _) ->
+  let result = analyze_function_call [] result in
+  let result = List.map (fun (function_info, tree) -> (function_info, remove_empty_from_tree_with_id tree)) result in
+  let result = List.map (fun (function_info, tree) -> (function_info, remove_empty_from_tree_with_id tree)) result in
+  let result = List.map (fun (function_info, tree) -> (function_info, remove_rec_node_from_tree tree)) result in
+  let result = List.map (fun (function_info, tree) -> (function_info, remove_rec_node_from_tree tree)) result in
+  List.iter (fun (function_info, perform_lst) ->
     Printf.printf "result_function_name: %s\n" (fst function_info);
     print_endline (efNameTreeWithId_to_string perform_lst);) result;
-  let result = List.map (fun (function_info, tree, local_var_lst) -> (function_info, remove_id_from_tree tree, local_var_lst)) result in
-  let result = analyze_function_call [] result in
   result 
 
 (* let main () =
@@ -384,14 +387,13 @@ let effect_row_test filename =
 
 let main () = 
   let result = effect_row_test Sys.argv.(1) in
-  let result = List.map (fun (function_info, tree) -> (function_info, add_id_to_efNameTree tree 0)) result in
-  let result2 = List.map (fun (function_info, (tree, _)) -> (function_info, split_node_edge tree)) result in
+  let result2 = List.map (fun (function_info, tree) -> (function_info, split_node_edge tree)) result in
   let len = List.length result2 in
   let (_, (nodes, edegs)) = List.nth result2 (len-1) in
   let _ = write_json (effect_row_to_json nodes edegs) "./graph/src/elements.json" in
   List.iter (fun (function_info, perform_lst) ->
         Printf.printf "function_name: %s\n" (fst function_info);
-        print_endline (efNameTreeWithId_to_string (fst perform_lst));) result;
+        print_endline (efNameTreeWithId_to_string perform_lst);) result;
   ()
 
 (* let main () =
