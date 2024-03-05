@@ -27,12 +27,36 @@ let get_name (efName: efName) : string = match efName with
   | EffectName (name, _, _) -> name
   | Empty -> ""
   | Root -> ""
+  | Conditions _ -> ""
 
 let get_id = function
   | LeafWithId id -> id
   | NodeWithId (_, _, id) -> id
   | RecNodeWithId id -> id
+  | ConditionWithId (_,_,id) -> id
 
+(* condition listの最後のidを全て取得する *)
+let rec get_last_id_of_condition (lst: efNameTreeWithId list) = 
+  let rec loop lst acc = match lst with
+    | [] -> acc
+    | hd :: tl -> ( match hd with
+      | NodeWithId (_, [], id) -> loop tl (id :: acc)
+      | NodeWithId (_, children, id) -> 
+        let children = List.filter_map (fun tree ->match tree with LeafWithId _ -> None | RecNodeWithId _ -> None | _ -> Some tree) children in 
+        if children = [] then loop tl (id :: acc) else loop tl (loop children acc)
+      | ConditionWithId (condition_lst, [], _) ->
+        let new_last_lst = get_last_id_of_condition condition_lst in
+        loop tl (new_last_lst @ acc)
+      | ConditionWithId (_, children, _) ->
+        let children = List.filter_map (fun tree ->match tree with LeafWithId _ -> None | _ -> Some tree) children in 
+        if children = [] then loop tl acc else loop tl (loop children acc)
+      | _ -> loop tl acc
+    )
+  in
+  loop lst []
+
+
+(* efNameTreeWithIdをjsonに変換する *)
 
 (* nodeとedgeのlistに分ける *)
 (* 返り値はnode, edgeタプル *)
@@ -43,6 +67,15 @@ let split_node_edge (tree: efNameTreeWithId) : (((int * string) * (int * int)) l
       let node' = ((id, (get_name name)), (x, y)) :: node in
       let edge' = List.fold_left (fun acc child -> (id, get_id child) :: acc) edge children in
       now_y := !now_y - 100;
+      List.fold_left (fun (node, edge) child -> now_y := !now_y + 100; loop child node edge (x + 100) !now_y) (node', edge') children
+    | ConditionWithId (condition_lst, children, id) -> 
+      let now_y = ref y in 
+      let node' = ((id, ""), (x, y)) :: node in
+      let edge' = List.fold_left (fun acc child -> (id, get_id child) :: acc) edge condition_lst in
+      now_y := !now_y - 100;
+      let condition_last_id_lst = get_last_id_of_condition condition_lst in
+      let edge' = List.fold_left (fun acc child -> List.map (fun id -> (id, get_id child)) condition_last_id_lst @ acc) edge' children in
+      let (node', edge') = List.fold_left (fun (node, edge) child -> now_y := !now_y + 100; loop child node edge (x + 100) !now_y) (node', edge') condition_lst in
       List.fold_left (fun (node, edge) child -> now_y := !now_y + 100; loop child node edge (x + 100) !now_y) (node', edge') children
     | _ -> (node, edge)
   in

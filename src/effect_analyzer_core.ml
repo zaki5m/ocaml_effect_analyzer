@@ -2,6 +2,7 @@
 type efName = 
   | FunctionName of string * efNameOfHandler list * localVar list * arg list 
   | EffectName of string * localVar list * arg list
+  | Conditions of efNameTree list
   | Empty
   | Root
 and efNameOfHandler = 
@@ -27,5 +28,6 @@ and arg =
 (* treeにidを付与した型 *)
 type efNameTreeWithId = 
   | NodeWithId of efName * efNameTreeWithId list * int
+  | ConditionWithId of efNameTreeWithId list * efNameTreeWithId list * int (* 一つ目が条件分岐のリストでその後ろがその後に続くTreeのリスト *)
   | LeafWithId of int
   | RecNodeWithId of int

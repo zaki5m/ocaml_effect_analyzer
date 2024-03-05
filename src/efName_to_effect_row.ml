@@ -51,7 +51,7 @@ let analyze_handler (tree: efNameTreeWithId) (handler: efNameOfHandler list) nex
   
 
 (* handlerの解析はまだできていない *)
-let analyze_efName (exp_lst: ((string * int) * efNameTreeWithId * localVar list) list) efName local_var_lst current_id next_id  : ((efNameTreeWithId * efNameOfHandler list * int)) = match efName with
+let rec analyze_efName (exp_lst: ((string * int) * efNameTreeWithId * localVar list) list) efName local_var_lst current_id next_id  : ((efNameTreeWithId * efNameOfHandler list * int)) = match efName with
   | FunctionName (name, lst, current_eval, arg_lst) -> 
     Printf.printf "------------😀function_name: %s\n" name;
     if name = "continue" then (* continueの場合は残しておく *)
@@ -84,9 +84,28 @@ let analyze_efName (exp_lst: ((string * int) * efNameTreeWithId * localVar list)
   | EffectName (name, _, _) -> (NodeWithId (EffectName (name, [], []), [], current_id), [], next_id)
   | Empty -> (LeafWithId current_id, [], next_id)
   | Root -> NodeWithId (Root, [], current_id), [], next_id
+  | Conditions tree_lst -> 
+    let (tree_lst, next_id) = add_id_to_efNameTreeList tree_lst next_id in 
+    let ref_next_id = ref next_id in
+    let rec loop2 tree_lst next_id = match tree_lst with
+      | [] -> []
+      | tree :: tl ->
+        let (new_lst , next_id) = analyze_efNameTree exp_lst tree local_var_lst next_id in
+        ref_next_id := next_id;
+        new_lst :: loop2 tl next_id
+    in
+    let next_id = !ref_next_id in
+    let new_lst = loop2 tree_lst next_id in
+    let new_tree_lst = List.filter(fun tree -> tree != None) new_lst in
+    if new_tree_lst = [] then 
+      (LeafWithId current_id, [], next_id)
+    else
+      let new_tree_lst = List.map (fun tree -> Option.get tree) new_tree_lst in
+      (ConditionWithId (new_tree_lst, [], current_id), [], next_id)
+
 
 (* handler内の解析を行う *)
-let rec analyze_handler_inside exp_lst handler local_var_lst next_id = 
+and analyze_handler_inside exp_lst handler local_var_lst next_id = 
   let ref_next_id = ref next_id in
   let (effect_tree, exception_tree, ret_tree) = handler_lst_analyze handler [] [] Leaf in
   let rec loop tree = match tree with
@@ -133,7 +152,7 @@ let rec analyze_handler_inside exp_lst handler local_var_lst next_id =
   in
   ([Effc effect_tree; Exnc exception_tree; Retc ret_tree], !ref_next_id)
 
-let analyze_efNameTree (exp_lst: ((string * int)* efNameTreeWithId * localVar list ) list) tree local_var_lst next_id : (efNameTreeWithId option * int)  = 
+and analyze_efNameTree (exp_lst: ((string * int)* efNameTreeWithId * localVar list ) list) tree local_var_lst next_id : (efNameTreeWithId option * int)  = 
   let ref_next_id = ref next_id in
   let rec loop tree = match tree with
     | LeafWithId _ -> None
@@ -160,6 +179,14 @@ let analyze_efNameTree (exp_lst: ((string * int)* efNameTreeWithId * localVar li
             Some (add_efName_tree_with_id_list efName new_tree_lst)
         )
     | RecNodeWithId id -> (Some (RecNodeWithId id))
+    | ConditionWithId (condition_lst, lst, id) -> 
+      let new_condition_lst = List.map (fun tree -> loop tree) condition_lst in
+      let new_condition_lst = List.filter(fun tree -> tree != None) new_condition_lst in
+      let new_condition_lst = List.map (fun tree -> Option.get tree) new_condition_lst in
+      let new_tree_lst = List.map (fun tree -> loop tree) lst in
+      let new_tree_lst = List.filter(fun tree -> tree != None) new_tree_lst in
+      let new_tree_lst = List.map (fun tree -> Option.get tree) new_tree_lst in
+      (Some (ConditionWithId (new_condition_lst, new_tree_lst, id)))
   in
   let result = loop tree in
   (result, !ref_next_id)

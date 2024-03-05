@@ -145,14 +145,18 @@ let rec find_perform_in_expr ?(is_perform_name = false) is_patern_search expr (l
     Printf.printf "ifthenelse found: %s\n" (Pprintast.string_of_expression expr);
     let (route_tree, _) = find_perform_in_expr is_patern_search expr1 local_var_lst in
     let (if_tree, _) =  find_perform_in_expr is_patern_search expr2 local_var_lst in
+    let if_tree = if if_tree = [] then [Leaf] else if_tree in
     (match op_expr3 with
     | None -> 
       let new_tree_lst = append_efNameTree_list route_tree if_tree in
+        let new_tree_lst = [Node (Conditions new_tree_lst, [])] in
       (new_tree_lst, local_var_lst)
     | Some expr3 ->
       let (else_tree, _) =  find_perform_in_expr is_patern_search expr3 local_var_lst in
+      let else_tree = if else_tree = [] then [Leaf] else else_tree in
       let if_else_tree = if_tree @ else_tree in
       let new_tree_lst = append_efNameTree_list route_tree if_else_tree in
+      let new_tree_lst = [Node (Conditions new_tree_lst, [])] in
       (new_tree_lst, local_var_lst))
   | Pexp_sequence (expr1, expr2) ->
     (* シーケンスの場合は式1と式2をトラバースする *)
@@ -353,11 +357,16 @@ let effect_row_test filename =
   List.iter (fun (function_info, perform_lst, _) ->
     Printf.printf "pre_function_name: %s\n" (fst function_info);
     print_endline (efNameTreeWithId_to_string (fst perform_lst));) result;
-  let result = List.map (fun (function_info, tree, local_var_lst) -> (function_info, tree, local_var_lst)) result in
   let result = function_call_to_mid_call_flow [] result in
+  List.iter (fun (function_info, perform_lst, _) ->
+    Printf.printf "mid_function_name: %s\n" (fst function_info);
+    print_endline (efNameTreeWithId_to_string perform_lst);) result;
   let result = analyze_function_call [] result in
   let result = List.map (fun (function_info, tree) -> (function_info, remove_empty_from_tree_with_id tree)) result in
   let result = List.map (fun (function_info, tree) -> (function_info, remove_empty_from_tree_with_id tree)) result in
+  List.iter (fun (function_info, perform_lst) ->
+    Printf.printf "mid2_function_name: %s\n" (fst function_info);
+    print_endline (efNameTreeWithId_to_string perform_lst);) result;
   let result = List.map (fun (function_info, tree) -> (function_info, remove_rec_node_from_tree tree)) result in
   let result = List.map (fun (function_info, tree) -> (function_info, remove_rec_node_from_tree tree)) result in
   List.iter (fun (function_info, perform_lst) ->

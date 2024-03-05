@@ -49,6 +49,7 @@ let change_handler (tree: efNameTreeWithId) (handler: efNameOfHandler list) loca
       | _ -> NodeWithId (efName, (List.map (fun tree ->  loop tree) tmp_tree_lst), id)
     )
     | RecNodeWithId id -> RecNodeWithId id
+    | ConditionWithId (lst1, lst2, id) -> ConditionWithId (lst1, lst2, id)
   in
   (loop tree, !ref_next_id) 
 
@@ -127,8 +128,10 @@ let rec change_tree_to_concrete (tree: efNameTreeWithId) (arg_lst: (localVar * l
     | EffectName (name, local_var_lst, _) -> NodeWithId (EffectName (name, local_var_lst, []), List.map (fun tree -> change_tree_to_concrete tree arg_lst) lst, id)
     | Empty -> NodeWithId (Empty, List.map (fun tree -> change_tree_to_concrete tree arg_lst) lst, id)
     | Root -> NodeWithId (Root, List.map (fun tree -> change_tree_to_concrete tree arg_lst) lst, id)
+    | _ -> LeafWithId id (* Conditionは後で要改善 *)
   )
   | RecNodeWithId id -> RecNodeWithId id
+  | ConditionWithId (lst1, lst2, id) -> ConditionWithId (lst1, lst2, id)
     
 
 (* treeをlocal_varが正しく入った状態のtgreeに変換する関数 *)
@@ -136,7 +139,7 @@ let rec change_tree_to_concrete (tree: efNameTreeWithId) (arg_lst: (localVar * l
 
 (* (tree, handler, この関数の引数の実際に入ってくる値に置き換えたもの), 現在のscope内の環境 *)
 (* current_idは今のid，next_idはtreeを増やす際の次のidを表している *)
-let change_efName (exp_lst: (((string * int) * efNameTreeWithId * localVar list) * bool) list) efName (local_var_lst: localVar list) current_id next_id (now_function: (string * int)) : ((efNameTreeWithId * efNameOfHandler list * localVar list)  * bool * int) = match efName with
+let rec change_efName (exp_lst: (((string * int) * efNameTreeWithId * localVar list) * bool) list) efName (local_var_lst: localVar list) current_id next_id (now_function: (string * int)) : ((efNameTreeWithId * efNameOfHandler list * localVar list)  * bool * int) = match efName with
   | FunctionName (name, lst, current_eval, arg_lst) -> 
     if name = "continue" then (* continueの場合は残しておく *)
       ((NodeWithId (efName, [], current_id), lst, []), false, next_id) (* この部分は要改善 *)
@@ -195,9 +198,31 @@ let change_efName (exp_lst: (((string * int) * efNameTreeWithId * localVar list)
   | EffectName (name, local_var_lst, _) -> ((NodeWithId (EffectName (name, local_var_lst, []), [], current_id), [], []),  false , next_id)
   | Empty -> ((LeafWithId current_id, [], []),  false, next_id)
   | Root -> ((NodeWithId (Root, [], current_id), [], []),  false, next_id)
+  | Conditions tree_lst -> 
+    let (tree_lst, next_id) = add_id_to_efNameTreeList tree_lst next_id in 
+    let ref_next_id = ref next_id in
+    let ref_used_args = ref false in
+    let rec loop2 tree_lst next_id = match tree_lst with
+      | [] -> []
+      | tree :: tl ->
+        let (new_lst , used_args, next_id) = change_efNameTree exp_lst tree local_var_lst next_id now_function in
+        ref_next_id := next_id;
+        ref_used_args := used_args || !ref_used_args;
+        new_lst :: loop2 tl next_id
+    in
+    let next_id = !ref_next_id in
+    let used_args = !ref_used_args in
+    let new_tree_lst = loop2 tree_lst next_id in
+    let new_tree_lst = List.filter(fun tree -> tree != None) new_tree_lst in
+    if new_tree_lst = [] then 
+      ((LeafWithId current_id, [], []),  used_args, next_id)
+    else
+      let new_tree_lst = List.map (fun tree -> Option.get tree) new_tree_lst in
+      ((ConditionWithId (new_tree_lst, [], current_id), [], []), used_args, next_id)
+
 
 (* handler内の解析を行う *)
-let rec change_handler_inside exp_lst handler local_var_lst next_id (now_function: (string * int)) = 
+and change_handler_inside exp_lst handler local_var_lst next_id (now_function: (string * int)) = 
   let used_args = ref false in
   let ref_next_id = ref next_id in 
   let (effect_tree, exception_tree, ret_tree) = handler_lst_analyze handler [] [] Leaf in
@@ -258,10 +283,10 @@ let rec change_handler_inside exp_lst handler local_var_lst next_id (now_functio
   ([Effc effect_tree; Exnc exception_tree; Retc ret_tree], !used_args, !ref_next_id)
 
 (* 現在はnow_functionにlocalvar listを持たせていないため，部分適用には未対応 *)
-let change_efNameTree (exp_lst: (((string * int)* efNameTreeWithId * localVar list) * bool ) list) tree local_var_lst (next_id: int) (now_function: (string * int)) : (efNameTreeWithId option * bool * int)  = 
+and change_efNameTree (exp_lst: (((string * int)* efNameTreeWithId * localVar list) * bool ) list) tree local_var_lst (next_id: int) (now_function: (string * int)) : (efNameTreeWithId option * bool * int)  = 
   let ref_next_id = ref next_id in
   let rec loop tree = match tree with
-    | LeafWithId _ -> (None, false, !ref_next_id)
+    | LeafWithId id -> (Some (LeafWithId id), false, !ref_next_id)
     | NodeWithId (name, lst, id) -> 
       Printf.printf "name: %s\n" (efName_to_string name);
       let ((efName, handler, rest_local_var), used_args, next_id) = change_efName exp_lst name local_var_lst id !ref_next_id now_function in
@@ -298,6 +323,16 @@ let change_efNameTree (exp_lst: (((string * int)* efNameTreeWithId * localVar li
 
         )
     | RecNodeWithId id -> (Some (RecNodeWithId id), false, !ref_next_id)
+    | ConditionWithId (condition_lst, lst, id) -> 
+      let new_condition_lst = List.map (fun tree -> loop tree) condition_lst in
+      let new_condition_lst = List.filter(fun (tree, _, _) -> tree != None) new_condition_lst in
+      let used_args = List.exists (fun (_, used_args, _) -> used_args) new_condition_lst in
+      let new_condition_lst = List.map (fun (tree, _, _) -> Option.get tree) new_condition_lst in
+      let new_tree_lst = List.map (fun tree -> loop tree) lst in
+      let new_tree_lst = List.filter(fun (tree, _, _) -> tree != None) new_tree_lst in
+      let used_args = used_args || List.exists (fun (_, used_args, _) -> used_args) new_tree_lst in
+      let new_tree_lst = List.map (fun (tree, _, _) -> Option.get tree) new_tree_lst in
+      (Some (ConditionWithId (new_condition_lst, new_tree_lst, id)), used_args, !ref_next_id)
   in
   loop tree
 
