@@ -399,10 +399,30 @@ let search_next_id tree =
   loop tree;
   !ref_max_id + 1
 
-(*  *)
+(* Emptyを削除したTreeWithIdを再構築 *)
+let remove_empty_from_tree_with_id tree = 
+  let rec loop (tree: efNameTreeWithId) = match tree with 
+    | LeafWithId _ -> [LeafWithId (-1)]
+    | NodeWithId (efName, lst, id) -> (match efName with 
+      | Empty -> loop2 lst
+      | _ -> [NodeWithId (efName, loop2 lst, id)]
+    )
+    | RecNodeWithId id -> [RecNodeWithId id]
+    | ConditionWithId (condition_lst, lst, id) -> 
+      let new_condition_lst = loop2 condition_lst in
+      let new_lst = loop2 lst in
+      [ConditionWithId (new_condition_lst, new_lst, id)]
+    and loop2 (lst: efNameTreeWithId list) = match lst with
+      | [] -> []
+      | hd :: tl -> (match loop hd with
+        | [] -> loop2 tl
+        | lst -> lst @ (loop2 tl)
+      )
+  in
+  (loop tree) |> List.hd
 
-(* LeafとEmptyを削除したTreeWithIdを再構築 *)
-let rec remove_empty_from_tree_with_id tree = match tree with
+(* Emptyを削除したTreeWithIdを再構築 *)
+(* let rec remove_empty_from_tree_with_id tree = match tree with
   | LeafWithId _ -> LeafWithId (-1)
   | NodeWithId (efName, lst, id) -> 
     let not_leaf_lst = List.filter (fun tree -> 
@@ -450,7 +470,7 @@ let rec remove_empty_from_tree_with_id tree = match tree with
       | _ -> tmp_lst
     )) [] empty_lst in
     let new_empty_lst = List.map (fun tree -> remove_empty_from_tree_with_id tree) new_empty_lst in
-    ConditionWithId (condition_lst, new_empty_lst @ new_not_empty_lst, id)
+    ConditionWithId (condition_lst, new_empty_lst @ new_not_empty_lst, id) *)
 
 (* TrreWithIdから後続のlstを取得する関数 *)
 let get_lst_from_tree_with_id tree = match tree with
@@ -471,7 +491,6 @@ let rec search_rec_id tree = match tree with
     let rec_id_lst = List.fold_left (fun tmp_lst tree -> (
       search_rec_id tree @ tmp_lst
     )) [] condition_lst in
-    Printf.printf "rec_id_lst: %s\n" (List.fold_left (fun acc id -> acc ^ (string_of_int id) ^ ", ") "" rec_id_lst);
     let rec_id_lst2 = List.fold_left (fun tmp_lst tree -> (
       search_rec_id tree @ tmp_lst
     )) [] lst in
@@ -493,7 +512,7 @@ let remove_rec_node_from_tree tree =
           | Root -> None
           | _ -> Some (NodeWithId (efName, loop2 lst, id))
         )
-    | LeafWithId _ -> None
+    | LeafWithId id -> Some (LeafWithId id)
     | RecNodeWithId id -> Some (RecNodeWithId id)
     | ConditionWithId (condition_lst, lst, id) -> 
       if List.exists (fun tmp_id -> tmp_id = id) id_lst || !initial then

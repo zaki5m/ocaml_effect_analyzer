@@ -35,6 +35,13 @@ let get_id = function
   | RecNodeWithId id -> id
   | ConditionWithId (_,_,id) -> id
 
+let get_edge id edges = function
+  | LeafWithId _ -> edges
+  | NodeWithId (_, _, id') -> (id, id') :: edges
+  | RecNodeWithId id' -> (id, id') :: edges
+  | ConditionWithId (_, _, id') -> (id, id') :: edges
+
+
 (* condition listの最後のidを全て取得する *)
 let rec get_last_id_of_condition (lst: efNameTreeWithId list) = 
   let rec loop lst acc = match lst with
@@ -42,14 +49,21 @@ let rec get_last_id_of_condition (lst: efNameTreeWithId list) =
     | hd :: tl -> ( match hd with
       | NodeWithId (_, [], id) -> loop tl (id :: acc)
       | NodeWithId (_, children, id) -> 
+        let exist_leaf = List.exists (fun tree -> match tree with LeafWithId _ -> true | _ -> false) children in
         let children = List.filter_map (fun tree ->match tree with LeafWithId _ -> None | RecNodeWithId _ -> None | _ -> Some tree) children in 
-        if children = [] then loop tl (id :: acc) else loop tl (loop children acc)
-      | ConditionWithId (condition_lst, [], _) ->
+        if children = [] then 
+          loop tl (id :: acc) 
+        else 
+          if exist_leaf then loop tl (id :: acc) else loop tl (loop children acc)
+      | ConditionWithId (condition_lst, [], id') ->
         let new_last_lst = get_last_id_of_condition condition_lst in
+        (* -1が含まれていたら，condition自体が最後のid *)
+        let new_last_lst = List.map (fun id -> if id = -1 then id' else id) new_last_lst in
         loop tl (new_last_lst @ acc)
       | ConditionWithId (_, children, _) ->
         let children = List.filter_map (fun tree ->match tree with LeafWithId _ -> None | _ -> Some tree) children in 
         if children = [] then loop tl acc else loop tl (loop children acc)
+      | LeafWithId id -> loop tl (id :: acc)
       | _ -> loop tl acc
     )
   in
@@ -61,19 +75,24 @@ let rec get_last_id_of_condition (lst: efNameTreeWithId list) =
 (* nodeとedgeのlistに分ける *)
 (* 返り値はnode, edgeタプル *)
 let split_node_edge (tree: efNameTreeWithId) : (((int * string) * (int * int)) list * (int * int)  list) =
+  Printf.printf "split_node_edge: %s\n" (efNameTreeWithId_to_string tree);
   let rec loop tree node edge x y = match tree with 
     | NodeWithId (name, children, id) -> 
       let now_y = ref y in 
       let node' = ((id, (get_name name)), (x, y)) :: node in
-      let edge' = List.fold_left (fun acc child -> (id, get_id child) :: acc) edge children in
+      let edge' = List.fold_left (fun acc child -> get_edge id acc child) edge children in
       now_y := !now_y - 100;
       List.fold_left (fun (node, edge) child -> now_y := !now_y + 100; loop child node edge (x + 100) !now_y) (node', edge') children
     | ConditionWithId (condition_lst, children, id) -> 
       let now_y = ref y in 
       let node' = ((id, ""), (x, y)) :: node in
-      let edge' = List.fold_left (fun acc child -> (id, get_id child) :: acc) edge condition_lst in
+      (* childのidが-1の時(Leafノード)の時は選択しないようにする *)
+      let edge' = List.fold_left (fun acc child -> get_edge id acc child) edge condition_lst in
+      Printf.printf "edges: %s\n" (String.concat ", " (List.map (fun (from, to_) -> Printf.sprintf "(%d, %d)" from to_) edge'));
       now_y := !now_y - 100;
       let condition_last_id_lst = get_last_id_of_condition condition_lst in
+      (* condition_last_id_lstに-1が含まれていたらcondition自体が最後のid *)
+      let condition_last_id_lst = List.map (fun id' -> if id' = -1 then id else id') condition_last_id_lst in
       let edge' = List.fold_left (fun acc child -> List.map (fun id -> (id, get_id child)) condition_last_id_lst @ acc) edge' children in
       let (node', edge') = List.fold_left (fun (node, edge) child -> now_y := !now_y + 100; loop child node edge (x + 100) !now_y) (node', edge') condition_lst in
       List.fold_left (fun (node, edge) child -> now_y := !now_y + 100; loop child node edge (x + 100) !now_y) (node', edge') children

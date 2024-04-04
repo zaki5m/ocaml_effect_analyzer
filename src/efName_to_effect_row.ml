@@ -155,7 +155,7 @@ and analyze_handler_inside exp_lst handler local_var_lst next_id =
 and analyze_efNameTree (exp_lst: ((string * int)* efNameTreeWithId * localVar list ) list) tree local_var_lst next_id : (efNameTreeWithId option * int)  = 
   let ref_next_id = ref next_id in
   let rec loop tree = match tree with
-    | LeafWithId _ -> None
+    | LeafWithId id -> (Some (LeafWithId id))
     | NodeWithId (name, lst, id) -> 
       Printf.printf "-------😡-------\n";
       Printf.printf "%s\n" (efNameTreeWithId_to_string tree);
