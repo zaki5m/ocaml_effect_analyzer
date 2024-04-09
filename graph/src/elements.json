@@ -13,10 +13,6 @@
       "position": { "x": 700, "y": 300 }
     },
     {
-      "data": { "id": "23", "name": "continue", "label": "Effect" },
-      "position": { "x": 700, "y": 200 }
-    },
-    {
       "data": { "id": "26", "name": "", "label": "Effect" },
       "position": { "x": 600, "y": 200 }
     },
@@ -56,18 +52,17 @@
   "edges": [
     { "data": { "id": "-1", "source": "17", "target": "0" } },
     { "data": { "id": "-2", "source": "26", "target": "24" } },
-    { "data": { "id": "-3", "source": "26", "target": "23" } },
-    { "data": { "id": "-4", "source": "12", "target": "26" } },
-    { "data": { "id": "-5", "source": "7", "target": "16" } },
-    { "data": { "id": "-6", "source": "8", "target": "7" } },
-    { "data": { "id": "-7", "source": "9", "target": "8" } },
-    { "data": { "id": "-8", "source": "24", "target": "17" } },
-    { "data": { "id": "-9", "source": "23", "target": "17" } },
-    { "data": { "id": "-10", "source": "7", "target": "17" } },
-    { "data": { "id": "-11", "source": "14", "target": "12" } },
-    { "data": { "id": "-12", "source": "14", "target": "9" } },
-    { "data": { "id": "-13", "source": "15", "target": "14" } },
-    { "data": { "id": "-14", "source": "16", "target": "15" } },
-    { "data": { "id": "-15", "source": "3", "target": "16" } }
+    { "data": { "id": "-3", "source": "12", "target": "26" } },
+    { "data": { "id": "-4", "source": "7", "target": "16" } },
+    { "data": { "id": "-5", "source": "8", "target": "7" } },
+    { "data": { "id": "-6", "source": "9", "target": "8" } },
+    { "data": { "id": "-7", "source": "24", "target": "17" } },
+    { "data": { "id": "-8", "source": "26", "target": "17" } },
+    { "data": { "id": "-9", "source": "7", "target": "17" } },
+    { "data": { "id": "-10", "source": "14", "target": "12" } },
+    { "data": { "id": "-11", "source": "14", "target": "9" } },
+    { "data": { "id": "-12", "source": "15", "target": "14" } },
+    { "data": { "id": "-13", "source": "16", "target": "15" } },
+    { "data": { "id": "-14", "source": "3", "target": "16" } }
   ]
 }

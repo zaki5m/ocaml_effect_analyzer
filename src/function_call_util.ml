@@ -303,6 +303,7 @@ let rec analyze_handler_serch_continue tree = match tree with
         Some Leaf
       else 
         Some (Node (efName, (List.filter_map (fun tree -> analyze_handler_serch_continue tree) lst)))
+    | Conditions condition_lst -> Some (Node (Conditions (List.filter_map (fun tree -> analyze_handler_serch_continue tree) condition_lst), (List.filter_map (fun tree -> analyze_handler_serch_continue tree) lst)))
     | _ -> Some (Node (efName, (List.filter_map (fun tree -> analyze_handler_serch_continue tree) lst)))
   )
 
