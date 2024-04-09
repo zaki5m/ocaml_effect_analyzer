@@ -18,8 +18,14 @@ and add_id_to_efNameTree (tree: efNameTree) (id: int) : (efNameTreeWithId * int)
   match tree with
   | Leaf -> (LeafWithId id, id+1)
   | Node (name, children) ->
+      (match name with
+      | Conditions tree_lst -> 
+        let (tree_lst, next_id) = add_id_to_efNameTreeList tree_lst id in
+        let (children_with_id, new_id) = add_id_to_efNameTreeList children next_id in
+        (ConditionWithId (tree_lst, children_with_id, new_id), new_id+1)
+      | _ -> 
       let (children_with_id, new_id) = add_id_to_efNameTreeList children id in
-      NodeWithId (name, children_with_id, new_id), new_id+1
+      NodeWithId (name, children_with_id, new_id), new_id+1)
 
 (* efNameから名前を出力する *)
 let get_name (efName: efName) : string = match efName with

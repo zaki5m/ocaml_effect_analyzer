@@ -21,12 +21,14 @@ let change_handler (tree: efNameTreeWithId) (handler: efNameOfHandler list) loca
         (match result with
         | Some (_, tmp_tree, local_var_lst) ->
           (* let continue_tree = Node (FunctionName (" ", handler , tmp_tree_lst, []), []) in *)
+          Printf.printf "name: %s, tmp_tree: %s\n" name (efNameTree_to_string tmp_tree);
           let tmp_tree = analyze_handler_serch_continue tmp_tree in
           (match tmp_tree with
           | Some tree ->
             let (next_tree, next_id) = add_id_to_efNameTree tree !ref_next_id in
+            Printf.printf "next_tree: %s\n" (efNameTreeWithId_to_string next_tree);
             ref_next_id := next_id;
-            let new_tree = (NodeWithId (efName, [next_tree], id)) in
+            let new_tree = (NodeWithId (efName, [loop next_tree], id)) in
             add_efName_tree_with_id_list_to_leaf new_tree (List.map (fun tree ->  loop tree) tmp_tree_lst)
           | None -> 
             let new_tree = (NodeWithId (efName, [], id)) in
@@ -39,7 +41,7 @@ let change_handler (tree: efNameTreeWithId) (handler: efNameOfHandler list) loca
           | Some tree ->
             let (next_tree, next_id) = add_id_to_efNameTree tree !ref_next_id in
             ref_next_id := next_id;
-            let new_tree = (NodeWithId (efName, [next_tree], id)) in
+            let new_tree = (NodeWithId (efName, [loop next_tree], id)) in
             add_efName_tree_with_id_list_to_leaf new_tree (List.map (fun tree ->  loop tree) tmp_tree_lst)
           | None -> 
             let new_tree = (NodeWithId (efName, [], id)) in
@@ -49,7 +51,10 @@ let change_handler (tree: efNameTreeWithId) (handler: efNameOfHandler list) loca
       | _ -> NodeWithId (efName, (List.map (fun tree ->  loop tree) tmp_tree_lst), id)
     )
     | RecNodeWithId id -> RecNodeWithId id
-    | ConditionWithId (lst1, lst2, id) -> ConditionWithId (lst1, lst2, id)
+    | ConditionWithId (lst1, lst2, id) -> 
+      let new_lst1 = List.map (fun tree -> loop tree) lst1 in
+      let new_lst2 = List.map (fun tree -> loop tree) lst2 in
+      ConditionWithId (new_lst1, new_lst2, id)
   in
   (loop tree, !ref_next_id) 
 
