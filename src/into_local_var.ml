@@ -3,7 +3,24 @@ open Function_call_util
 open Efname_formatter
 open Effect_row_to_graph
 
+(* 継続をtreeに置き換える *)
+let local_var_lst_convert_continuation_tree (local_var_lst: localVar list) (tree_lst: efNameTreeWithId list) = 
+  let rec loop local_var_lst = match local_var_lst with
+    | [] -> []
+    | hd :: tl -> 
+      (match hd with
+      | ArgsVar (name, _) -> 
+        if name = "k" then 
+          (LocalVarWithId ("k", [], NodeWithId (Empty, tree_lst, -1))) :: loop tl 
+        else hd :: loop tl 
+      | _ -> hd :: loop tl 
+      )
+  in
+  loop local_var_lst
 
+(* 継続をtreeに置き換える *)
+
+(* treeの中身をhandlerがある場合のtreeに置き換える *)
 let change_handler (tree: efNameTreeWithId) (handler: efNameOfHandler list) local_var_lst next_id = 
   let (effect_lst, exception_lst, ret_tree) = handler_lst_analyze handler [] [] Leaf in
   let ref_next_id = ref next_id in
@@ -21,32 +38,27 @@ let change_handler (tree: efNameTreeWithId) (handler: efNameOfHandler list) loca
         (match result with
         | Some (_, tmp_tree, local_var_lst) ->
           (* let continue_tree = Node (FunctionName (" ", handler , tmp_tree_lst, []), []) in *)
-          Printf.printf "name: %s, tmp_tree: %s\n" name (efNameTree_to_string tmp_tree);
-          let tmp_tree = analyze_handler_serch_continue tmp_tree in
-          (match tmp_tree with
-          | Some tree ->
-            let (next_tree, next_id) = add_id_to_efNameTree tree !ref_next_id in
-            Printf.printf "next_tree: %s\n" (efNameTreeWithId_to_string next_tree);
-            ref_next_id := next_id;
-            let new_tree = (NodeWithId (efName, [loop next_tree], id)) in
-            add_efName_tree_with_id_list_to_leaf new_tree (List.map (fun tree ->  loop tree) tmp_tree_lst)
-          | None -> 
-            let new_tree = (NodeWithId (efName, [], id)) in
-            add_efName_tree_with_id_list_to_leaf new_tree (List.map (fun tree ->  loop tree) tmp_tree_lst)
-          )
+          Printf.printf "🤖name: %s, tmp_tree: %s\n" name (efNameTree_to_string tmp_tree);
+          Printf.printf "tmp_tree_lst: %s\n" (efNameTreeWithId_to_string (NodeWithId (efName, tmp_tree_lst, id)));
+          (* local_var_lstのk(ここではkが継続とする)をtmp_tree_lstに置き換える *)
+          let local_var_lst = local_var_lst_convert_continuation_tree local_var_lst tmp_tree_lst in
+          let continuation_tree = List.map (fun tree ->  loop tree) tmp_tree_lst in 
+          Printf.printf "😇continuation_tree: %s\n" (efNameTreeWithId_to_string (NodeWithId (efName, continuation_tree, id)));
+          let (next_tree, next_id) = add_id_to_efNameTree tmp_tree !ref_next_id in
+          ref_next_id := next_id;
+          let new_tree = NodeWithId (efName, [next_tree], id) in
+          Printf.printf "😇new_tree: %s\n" (efNameTreeWithId_to_string new_tree);
+          let tmp_tree = analyze_handler_serch_continue new_tree continuation_tree in
+          Printf.printf "😇tmp_tree: %s\n" (efNameTreeWithId_to_string tmp_tree);
+          tmp_tree
         | None -> 
           let tmp_tree = any_exist_wildcard effect_lst in
-          let tmp_tree = analyze_handler_serch_continue tmp_tree in
-          (match tmp_tree with
-          | Some tree ->
-            let (next_tree, next_id) = add_id_to_efNameTree tree !ref_next_id in
-            ref_next_id := next_id;
-            let new_tree = (NodeWithId (efName, [loop next_tree], id)) in
-            add_efName_tree_with_id_list_to_leaf new_tree (List.map (fun tree ->  loop tree) tmp_tree_lst)
-          | None -> 
-            let new_tree = (NodeWithId (efName, [], id)) in
-            add_efName_tree_with_id_list_to_leaf new_tree (List.map (fun tree ->  loop tree) tmp_tree_lst)
-          )
+          let continuation_tree = List.map (fun tree ->  loop tree) tmp_tree_lst in 
+          let (next_tree, next_id) = add_id_to_efNameTree tmp_tree !ref_next_id in
+          ref_next_id := next_id;
+          let new_tree = NodeWithId (efName, [next_tree], id) in
+          let tmp_tree = analyze_handler_serch_continue new_tree continuation_tree in
+          tmp_tree
         )
       | _ -> NodeWithId (efName, (List.map (fun tree ->  loop tree) tmp_tree_lst), id)
     )
@@ -240,6 +252,7 @@ and change_handler_inside exp_lst handler local_var_lst next_id (now_function: (
         else 
           let (new_handler, tmp_used_args, next_id) = change_handler_inside exp_lst handler local_var_lst next_id now_function in
           let (efName, next_id) = change_handler efName new_handler local_var_lst next_id in
+          Printf.printf "efName: %s\n" (efNameTreeWithId_to_string efName);
           (efName, tmp_used_args, next_id)
       in
       let new_tree_lst = List.map(fun tree -> loop tree next_id) lst in
@@ -293,7 +306,7 @@ and change_efNameTree (exp_lst: (((string * int)* efNameTreeWithId * localVar li
   let rec loop tree = match tree with
     | LeafWithId id -> (Some (LeafWithId id), false, !ref_next_id)
     | NodeWithId (name, lst, id) -> 
-      Printf.printf "name: %s\n" (efName_to_string name);
+      Printf.printf "🇮🇸name: %s\n" (efName_to_string name);
       let ((efName, handler, rest_local_var), used_args, next_id) = change_efName exp_lst name local_var_lst id !ref_next_id now_function in
       Printf.printf "efName_base: %s\n" (efNameTreeWithId_to_string efName);
       Printf.printf "handler_base: %s\n" (handlers_to_string handler);
@@ -306,6 +319,7 @@ and change_efNameTree (exp_lst: (((string * int)* efNameTreeWithId * localVar li
           Printf.printf "pre_handler: %s\n" (handlers_to_string handler);
           Printf.printf "new_handler: %s\n" (handlers_to_string new_handler);
           let (efName, next_id) = change_handler efName new_handler local_var_lst next_id in
+          Printf.printf "efName2: %s\n" (efNameTreeWithId_to_string efName);
           (efName, tmp_used_args, next_id)
       in
       ref_next_id := next_id;

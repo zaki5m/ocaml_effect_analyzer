@@ -18,30 +18,20 @@ let analyze_handler (tree: efNameTreeWithId) (handler: efNameOfHandler list) nex
         let result = List.find_opt (fun (tmp_name, _, _) -> name = tmp_name) effect_lst in
         (match result with
         | Some (_, tmp_tree, _) ->  
-          let tmp_tree = analyze_handler_serch_continue tmp_tree in
-          (match tmp_tree with
-          | Some tree ->
-            let (next_tree, next_id) = add_id_to_efNameTree tree !ref_next_id in
-            ref_next_id := next_id;
-            let new_tree = (NodeWithId (efName, [next_tree], id)) in
-            add_efName_tree_with_id_list_to_leaf new_tree (List.map (fun tree ->  loop tree) tmp_tree_lst)
-          | None -> 
-            let new_tree = (NodeWithId (efName, [], id)) in
-            add_efName_tree_with_id_list_to_leaf new_tree (List.map (fun tree ->  loop tree) tmp_tree_lst)
-          )
+          let continuation_tree = List.map (fun tree ->  loop tree) tmp_tree_lst in 
+          let (next_tree, next_id) = add_id_to_efNameTree tmp_tree !ref_next_id in
+          ref_next_id := next_id;
+          let new_tree = NodeWithId (efName, [next_tree], id) in
+          let tmp_tree = analyze_handler_serch_continue new_tree continuation_tree in
+          tmp_tree
         | None -> 
           let tmp_tree = any_exist_wildcard effect_lst in
-          let tmp_tree = analyze_handler_serch_continue tmp_tree in
-          (match tmp_tree with
-          | Some tree ->
-            let (next_tree, next_id) = add_id_to_efNameTree tree !ref_next_id in
-            ref_next_id := next_id;
-            let new_tree = (NodeWithId (efName, [next_tree], id)) in
-            add_efName_tree_with_id_list_to_leaf new_tree (List.map (fun tree ->  loop tree) tmp_tree_lst)
-          | None -> 
-            let new_tree = (NodeWithId (efName, [], id)) in
-            add_efName_tree_with_id_list_to_leaf new_tree (List.map (fun tree ->  loop tree) tmp_tree_lst)
-          )
+          let continuation_tree = List.map (fun tree ->  loop tree) tmp_tree_lst in 
+          let (next_tree, next_id) = add_id_to_efNameTree tmp_tree !ref_next_id in
+          ref_next_id := next_id;
+          let new_tree = NodeWithId (efName, [next_tree], id) in
+          let tmp_tree = analyze_handler_serch_continue new_tree continuation_tree in
+          tmp_tree
         )
       | _ -> NodeWithId (efName, (List.map (fun tree ->  loop tree) tmp_tree_lst), id)
     )
