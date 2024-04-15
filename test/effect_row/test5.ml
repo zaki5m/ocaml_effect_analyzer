@@ -21,9 +21,9 @@ let function_call_test =
   let second = List.hd (List.tl result) in
   let expect_second_node = 
     Node (Root, [
-      Node (EffectName ("Increment", [], [], false), 
+      Node (EffectName ("Increment", [], [], true), 
       [Node (Conditions 
-      [Node (EffectName ("Increment", [], [], false), [Leaf]); Node (EffectName ("Decrement", [], [], false), [Leaf])]
+      [Node (EffectName ("Increment", [], [], true), [Leaf]); Node (EffectName ("Decrement", [], [], true), [Leaf])]
       , [])])
     ])
   in

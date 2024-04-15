@@ -14,10 +14,10 @@ let function_call_test =
   let second = List.hd (List.tl result) in
   let expect_second_node = 
     Node (Root, [
-      Node (EffectName ("Increment", [], [], false), 
-        [Node (EffectName ("Increment", [], [], false), 
-          [Node (EffectName ("Increment", [], [], false), 
-            [Node (EffectName ("Increment", [], [], false), [])
+      Node (EffectName ("Increment", [], [], true), 
+        [Node (EffectName ("Increment", [], [], true), 
+          [Node (EffectName ("Increment", [], [], true), 
+            [Node (EffectName ("Increment", [], [], true), [])
             ])
           ])
         ])
@@ -29,10 +29,10 @@ let function_call_test =
   let third = List.hd (List.tl (List.tl result)) in
   let expect_third_node = 
     Node (Root, [
-      Node (EffectName ("Increment", [], [], false), 
-        [Node (EffectName ("Increment", [], [], false), 
-          [Node (EffectName ("Increment", [], [], false), 
-            [Node (EffectName ("Increment", [], [], false), [])
+      Node (EffectName ("Increment", [], [], true), 
+        [Node (EffectName ("Increment", [], [], true), 
+          [Node (EffectName ("Increment", [], [], true), 
+            [Node (EffectName ("Increment", [], [], true), [])
             ])
           ])
         ])
