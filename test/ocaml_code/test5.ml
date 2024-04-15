@@ -1,4 +1,5 @@
 (* 分岐が存在する *)
+open Effect
 open Effect.Deep
 
 (*type _ Effect.t += Xchg: int -> int t

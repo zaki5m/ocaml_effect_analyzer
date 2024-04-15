@@ -14,7 +14,7 @@ let analyze_handler (tree: efNameTreeWithId) (handler: efNameOfHandler list) nex
       ref_next_id := next_id;
       NodeWithId (efName, [ret_tree_with_id], id)
     | NodeWithId (efName, tmp_tree_lst, id) -> (match efName with
-      | EffectName (name, _, _) -> 
+      | EffectName (name, _, _,_) -> 
         let result = List.find_opt (fun (tmp_name, _, _) -> name = tmp_name) effect_lst in
         (match result with
         | Some (_, tmp_tree, _) ->  
@@ -71,7 +71,7 @@ let rec analyze_efName (exp_lst: ((string * int) * efNameTreeWithId * localVar l
         | _ ->
           Printf.printf "🥰name: %s\n" name;
           (LeafWithId current_id, [], next_id))) (* ユーザ定義でない関数からはeffectのperformはないものとして考える *)
-  | EffectName (name, _, _) -> (NodeWithId (EffectName (name, [], []), [], current_id), [], next_id)
+  | EffectName (name, _, _,flag) -> (NodeWithId (EffectName (name, [], [],flag), [], current_id), [], next_id)
   | Empty -> (LeafWithId current_id, [], next_id)
   | Root -> NodeWithId (Root, [], current_id), [], next_id
   | Conditions tree_lst -> 

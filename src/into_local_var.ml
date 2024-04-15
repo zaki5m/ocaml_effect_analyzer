@@ -26,27 +26,49 @@ let change_handler (tree: efNameTreeWithId) (handler: efNameOfHandler list) loca
   let ref_next_id = ref next_id in
   let rec loop (tree: efNameTreeWithId) = match tree with
     | LeafWithId id -> LeafWithId id
-    | NodeWithId (efName, [], id) -> 
-      let (ret_tree_with_id, next_id) = add_id_to_efNameTree ret_tree !ref_next_id in
-      ref_next_id := next_id;
-      NodeWithId (efName, [ret_tree_with_id], id)
+    | NodeWithId (efName, [], id) -> (match efName with
+      | EffectName (name, _,_, _) -> 
+        let result = List.find_opt (fun (tmp_name, _, _) -> name = tmp_name) effect_lst in
+        (* 現在は絶対にhandleするものと仮定している *)
+        let handled_efName = change_effect_to_handled efName in
+        let (ret_tree_with_id, next_id) = add_id_to_efNameTree ret_tree !ref_next_id in
+        ref_next_id := next_id;
+        let tmp_tree = 
+          (match result with
+            | Some (_, tmp_tree, local_var_lst) -> 
+              tmp_tree
+            | None -> 
+              let tmp_tree = any_exist_wildcard effect_lst in
+              tmp_tree
+          )
+        in
+        let (next_tree, next_id) = add_id_to_efNameTree tmp_tree !ref_next_id in
+        ref_next_id := next_id;
+        let new_tree = NodeWithId (handled_efName, [next_tree], id) in
+        let tmp_tree = analyze_handler_serch_continue new_tree [ret_tree_with_id] in (* 継続がreturn句のため *)
+        tmp_tree
+      | _ -> 
+        let (ret_tree_with_id, next_id) = add_id_to_efNameTree ret_tree !ref_next_id in
+        ref_next_id := next_id;
+        NodeWithId (efName, [ret_tree_with_id], id)
+    )
     | NodeWithId (efName, tmp_tree_lst, id) -> (match efName with
-      | EffectName (name, _, _) -> 
+      | EffectName (name, _, _,_) -> 
         (* tmp_tree_lstが継続 *)
         (* 実際には継続は関数が返ってbindすることもあるが，その場合は現在未考慮 *)
         let result = List.find_opt (fun (tmp_name, _, _) -> name = tmp_name) effect_lst in
+        (* 現在は絶対にhandleするものと仮定している *)
+        let handled_efName = change_effect_to_handled efName in 
         (match result with
         | Some (_, tmp_tree, local_var_lst) ->
           (* let continue_tree = Node (FunctionName (" ", handler , tmp_tree_lst, []), []) in *)
           Printf.printf "🤖name: %s, tmp_tree: %s\n" name (efNameTree_to_string tmp_tree);
-          Printf.printf "tmp_tree_lst: %s\n" (efNameTreeWithId_to_string (NodeWithId (efName, tmp_tree_lst, id)));
-          (* local_var_lstのk(ここではkが継続とする)をtmp_tree_lstに置き換える *)
-          let local_var_lst = local_var_lst_convert_continuation_tree local_var_lst tmp_tree_lst in
+          Printf.printf "tmp_tree_lst: %s\n" (efNameTreeWithId_to_string (NodeWithId (handled_efName, tmp_tree_lst, id)));
           let continuation_tree = List.map (fun tree ->  loop tree) tmp_tree_lst in 
-          Printf.printf "😇continuation_tree: %s\n" (efNameTreeWithId_to_string (NodeWithId (efName, continuation_tree, id)));
+          Printf.printf "😇continuation_tree: %s\n" (efNameTreeWithId_to_string (NodeWithId (handled_efName , continuation_tree, id)));
           let (next_tree, next_id) = add_id_to_efNameTree tmp_tree !ref_next_id in
           ref_next_id := next_id;
-          let new_tree = NodeWithId (efName, [next_tree], id) in
+          let new_tree = NodeWithId (handled_efName, [next_tree], id) in
           Printf.printf "😇new_tree: %s\n" (efNameTreeWithId_to_string new_tree);
           let tmp_tree = analyze_handler_serch_continue new_tree continuation_tree in
           Printf.printf "😇tmp_tree: %s\n" (efNameTreeWithId_to_string tmp_tree);
@@ -56,15 +78,20 @@ let change_handler (tree: efNameTreeWithId) (handler: efNameOfHandler list) loca
           let continuation_tree = List.map (fun tree ->  loop tree) tmp_tree_lst in 
           let (next_tree, next_id) = add_id_to_efNameTree tmp_tree !ref_next_id in
           ref_next_id := next_id;
-          let new_tree = NodeWithId (efName, [next_tree], id) in
+          let new_tree = NodeWithId (handled_efName, [next_tree], id) in
           let tmp_tree = analyze_handler_serch_continue new_tree continuation_tree in
           tmp_tree
         )
-      | _ -> NodeWithId (efName, (List.map (fun tree ->  loop tree) tmp_tree_lst), id)
+      | _ -> 
+        Printf.printf "🤖tmp_tree_lst: %s\n" (efNameTreeWithId_to_string (NodeWithId (efName, tmp_tree_lst, id)));
+        Printf.printf "tmp_tree_lst_len: %d\n" (List.length tmp_tree_lst);
+        NodeWithId (efName, (List.map (fun tree ->  loop tree) tmp_tree_lst), id)
     )
     | RecNodeWithId id -> RecNodeWithId id
     | ConditionWithId (lst1, lst2, id) -> 
+      Printf.printf "lst1: %s\n" (efNameTreeWithId_to_string (NodeWithId (Empty, lst1, -1)));
       let new_lst1 = List.map (fun tree -> loop tree) lst1 in
+      Printf.printf "new_lst1: %s\n" (efNameTreeWithId_to_string (NodeWithId (Empty, new_lst1, -1)));
       let new_lst2 = List.map (fun tree -> loop tree) lst2 in
       ConditionWithId (new_lst1, new_lst2, id)
   in
@@ -142,7 +169,7 @@ let rec change_tree_to_concrete (tree: efNameTreeWithId) (arg_lst: (localVar * l
     | FunctionName (name, handler, current_eval, tmp_arg_lst) -> 
       let new_current_eval = change_env_to_concrete current_eval arg_lst in
       NodeWithId (FunctionName (name, handler, new_current_eval, tmp_arg_lst), List.map (fun tree -> change_tree_to_concrete tree arg_lst) lst, id)
-    | EffectName (name, local_var_lst, _) -> NodeWithId (EffectName (name, local_var_lst, []), List.map (fun tree -> change_tree_to_concrete tree arg_lst) lst, id)
+    | EffectName (name, local_var_lst, _,flag) -> NodeWithId (EffectName (name, local_var_lst, [],flag), List.map (fun tree -> change_tree_to_concrete tree arg_lst) lst, id)
     | Empty -> NodeWithId (Empty, List.map (fun tree -> change_tree_to_concrete tree arg_lst) lst, id)
     | Root -> NodeWithId (Root, List.map (fun tree -> change_tree_to_concrete tree arg_lst) lst, id)
     | _ -> LeafWithId id (* Conditionは後で要改善 *)
@@ -212,7 +239,7 @@ let rec change_efName (exp_lst: (((string * int) * efNameTreeWithId * localVar l
             (LeafWithId current_id, [], []), false, next_id) (* ユーザ定義でない関数からはeffectのperformはないものとして考える *)
         )
       )
-  | EffectName (name, local_var_lst, _) -> ((NodeWithId (EffectName (name, local_var_lst, []), [], current_id), [], []),  false , next_id)
+  | EffectName (name, local_var_lst, _,flag) -> ((NodeWithId (EffectName (name, local_var_lst, [],flag), [], current_id), [], []),  false , next_id)
   | Empty -> ((LeafWithId current_id, [], []),  false, next_id)
   | Root -> ((NodeWithId (Root, [], current_id), [], []),  false, next_id)
   | Conditions tree_lst -> 

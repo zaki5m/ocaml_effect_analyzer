@@ -539,3 +539,8 @@ let remove_rec_node_from_tree tree =
   match loop tree with 
   | Some tree -> tree
   | None -> LeafWithId (-1)
+
+(*　Effectをhanndle済みに変更 *)
+let rec change_effect_to_handled efName = match efName with 
+  | EffectName (name, local_var, arg_lst, _) ->  EffectName (name, local_var, arg_lst, true)
+  | _ -> efName

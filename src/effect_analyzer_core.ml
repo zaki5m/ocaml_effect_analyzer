@@ -1,7 +1,7 @@
 (* 関数名かエフェクト名かの区別を行う *)
 type efName = 
   | FunctionName of string * efNameOfHandler list * localVar list * arg list 
-  | EffectName of string * localVar list * arg list
+  | EffectName of string * localVar list * arg list * bool (* bool値はeffectがhandle済みか未ハンドルかを区別するもの *)
   | Conditions of efNameTree list
   | Empty
   | Root

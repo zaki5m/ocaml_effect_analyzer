@@ -9,10 +9,10 @@ let function_call_test =
   let first = List.hd result in
   let expect_first_node =
     Node (Root, 
-      [Node (EffectName ("Increment", [ArgsVar ("acc", Leaf)], [ArgVar "acc"]), 
+      [Node (EffectName ("Increment", [ArgsVar ("acc", Leaf)], [ArgVar "acc"], false), 
         [Node (Conditions (
           [Node (FunctionName ("=", [], [LocalVar ("tmp", [], Leaf); ArgsVar ("acc", Leaf)], [ArgVar "tmp"; ArgValue]), 
-            [Node (EffectName ("Increment", [LocalVar ("tmp", [], Leaf); ArgsVar ("acc", Leaf)], [ArgVar "tmp"]), []); Node (EffectName ("Decrement", [LocalVar ("tmp", [], Leaf); ArgsVar ("acc", Leaf)], [ArgVar "tmp"]), [])])
+            [Node (EffectName ("Increment", [LocalVar ("tmp", [], Leaf); ArgsVar ("acc", Leaf)], [ArgVar "tmp"], false), []); Node (EffectName ("Decrement", [LocalVar ("tmp", [], Leaf); ArgsVar ("acc", Leaf)], [ArgVar "tmp"], false), [])])
           ]), [])])
       ]) 
   in

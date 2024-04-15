@@ -30,7 +30,7 @@ and add_id_to_efNameTree (tree: efNameTree) (id: int) : (efNameTreeWithId * int)
 (* efNameから名前を出力する *)
 let get_name (efName: efName) : string = match efName with
   | FunctionName (name,_,_,_) -> name
-  | EffectName (name, _, _) -> name
+  | EffectName (name, _, _,_) -> name
   | Empty -> ""
   | Root -> ""
   | Conditions _ -> ""
