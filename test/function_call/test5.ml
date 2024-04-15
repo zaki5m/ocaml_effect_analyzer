@@ -10,9 +10,10 @@ let function_call_test =
   let expect_first_node =
     Node (Root, 
       [Node (EffectName ("Increment", [ArgsVar ("acc", Leaf)], [ArgVar "acc"]), 
-        [Node (FunctionName ("=", [], [LocalVar ("tmp", [], Leaf); ArgsVar ("acc", Leaf)], [ArgVar "tmp"; ArgValue]),
-          [Node (EffectName ("Increment", [LocalVar ("tmp", [], Leaf); ArgsVar ("acc", Leaf)], [ArgVar "tmp"]), []); Node (EffectName ("Decrement", [LocalVar ("tmp", [], Leaf); ArgsVar ("acc", Leaf)], [ArgVar "tmp"]), [])])
-        ])
+        [Node (Conditions (
+          [Node (FunctionName ("=", [], [LocalVar ("tmp", [], Leaf); ArgsVar ("acc", Leaf)], [ArgVar "tmp"; ArgValue]), 
+            [Node (EffectName ("Increment", [LocalVar ("tmp", [], Leaf); ArgsVar ("acc", Leaf)], [ArgVar "tmp"]), []); Node (EffectName ("Decrement", [LocalVar ("tmp", [], Leaf); ArgsVar ("acc", Leaf)], [ArgVar "tmp"]), [])])
+          ]), [])])
       ]) 
   in
   assert (first = (("sum_up", 1), expect_first_node, [ArgsVar ("acc", Leaf)]));
