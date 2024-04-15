@@ -293,19 +293,22 @@ let any_exist_wildcard effect_lst =
   | Some (_, ef_lst, _) -> ef_lst
   | None -> Leaf
 
-let rec analyze_handler_serch_continue tree = match tree with
-  | Leaf -> None
-  | Node (efName, lst) -> (match efName with 
+(* continueがある場合に継続を後ろに付け加える *)
+let rec analyze_handler_serch_continue (tree: efNameTreeWithId) continuation_tree_lst = match tree with
+  | LeafWithId id -> LeafWithId id
+  | NodeWithId (efName, lst, id) -> (match efName with 
     | FunctionName (name, tmp_handler,  local_var_lst, arg_lst) ->
       Printf.printf "arg_lst: %s\n" (List.fold_left (fun acc arg -> acc ^  arg_to_string arg) "" arg_lst);
       Printf.printf "local_var_lst: %s\n" (List.fold_left (fun acc local_var -> acc ^  local_var_to_string local_var) "" local_var_lst);
       if name = "continue" then 
-        Some Leaf
+        NodeWithId (Empty, continuation_tree_lst, id)
       else 
-        Some (Node (efName, (List.filter_map (fun tree -> analyze_handler_serch_continue tree) lst)))
-    | Conditions condition_lst -> Some (Node (Conditions (List.filter_map (fun tree -> analyze_handler_serch_continue tree) condition_lst), (List.filter_map (fun tree -> analyze_handler_serch_continue tree) lst)))
-    | _ -> Some (Node (efName, (List.filter_map (fun tree -> analyze_handler_serch_continue tree) lst)))
+        NodeWithId (efName, (List.map (fun tree -> analyze_handler_serch_continue tree continuation_tree_lst) lst), id)
+    (* | Conditions condition_lst -> Some (NodeWithId (Conditions (List.filter_map (fun tree -> analyze_handler_serch_continue tree continuation_tree) condition_lst), (List.filter_map (fun tree -> analyze_handler_serch_continue tree) lst), id)) *)
+    | _ -> NodeWithId (efName, (List.map (fun tree -> analyze_handler_serch_continue tree continuation_tree_lst) lst), id)
   )
+  | RecNodeWithId id -> RecNodeWithId id
+  | ConditionWithId (condition_lst, lst, id) -> ConditionWithId (List.map (fun tree -> analyze_handler_serch_continue tree continuation_tree_lst) condition_lst, (List.map (fun tree -> analyze_handler_serch_continue tree continuation_tree_lst) lst), id)
 
 let rec add_continue_efNameTree handler tree = match tree with 
   | Leaf -> Leaf

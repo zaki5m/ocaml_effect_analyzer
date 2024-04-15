@@ -11,7 +11,9 @@ let function_call_test =
   let expect_first_node = 
     Node (Root, [
       Node (EffectName ("Increment", [], []), 
-        [Node (EffectName ("Increment", [], []), []); Node (EffectName ("Decrement", [], []), [])])
+        [Node (Conditions 
+          [Node (EffectName ("Increment", [], []), []); Node (EffectName ("Decrement", [], []), [])]
+          , [])])
     ])
   in
   let first = (fst first, remove_id_from_tree (snd first)) in
@@ -20,9 +22,9 @@ let function_call_test =
   let expect_second_node = 
     Node (Root, [
       Node (EffectName ("Increment", [], []), 
-        [Node (EffectName ("Increment", [], []), []);
-        Node (EffectName ("Decrement", [], []), [])
-        ])
+      [Node (Conditions 
+      [Node (EffectName ("Increment", [], []), [Leaf]); Node (EffectName ("Decrement", [], []), [Leaf])]
+      , [])])
     ])
   in
   let second = (fst second, remove_id_from_tree (snd second)) in
