@@ -1,55 +1,55 @@
 {
   "nodes": [
     {
-      "data": { "id": "0", "name": "Close", "label": "Effect" },
+      "data": { "id": "0", "name": "Close", "label": "NotHandledEffect" },
       "position": { "x": 600, "y": 300 }
     },
     {
-      "data": { "id": "17", "name": "Open", "label": "Effect" },
+      "data": { "id": "17", "name": "Open", "label": "NotHandledEffect" },
       "position": { "x": 500, "y": 300 }
     },
     {
-      "data": { "id": "25", "name": "Copy", "label": "Effect" },
+      "data": { "id": "25", "name": "Copy", "label": "NotHandledEffect" },
       "position": { "x": 700, "y": 300 }
     },
     {
-      "data": { "id": "10", "name": "Close", "label": "Effect" },
+      "data": { "id": "10", "name": "Close", "label": "HandledEffect" },
       "position": { "x": 700, "y": 200 }
     },
     {
-      "data": { "id": "27", "name": "", "label": "Effect" },
+      "data": { "id": "27", "name": "", "label": "HandledEffect" },
       "position": { "x": 600, "y": 200 }
     },
     {
-      "data": { "id": "12", "name": "Read", "label": "Effect" },
+      "data": { "id": "12", "name": "Read", "label": "HandledEffect" },
       "position": { "x": 500, "y": 200 }
     },
     {
-      "data": { "id": "7", "name": "", "label": "Effect" },
+      "data": { "id": "7", "name": "", "label": "HandledEffect" },
       "position": { "x": 700, "y": 100 }
     },
     {
-      "data": { "id": "8", "name": "Close", "label": "Effect" },
+      "data": { "id": "8", "name": "Close", "label": "HandledEffect" },
       "position": { "x": 600, "y": 100 }
     },
     {
-      "data": { "id": "9", "name": "Write", "label": "Effect" },
+      "data": { "id": "9", "name": "Write", "label": "HandledEffect" },
       "position": { "x": 500, "y": 100 }
     },
     {
-      "data": { "id": "14", "name": "", "label": "Effect" },
+      "data": { "id": "14", "name": "", "label": "HandledEffect" },
       "position": { "x": 400, "y": 100 }
     },
     {
-      "data": { "id": "15", "name": "Open", "label": "Effect" },
+      "data": { "id": "15", "name": "Open", "label": "HandledEffect" },
       "position": { "x": 300, "y": 100 }
     },
     {
-      "data": { "id": "16", "name": "", "label": "Effect" },
+      "data": { "id": "16", "name": "", "label": "HandledEffect" },
       "position": { "x": 200, "y": 100 }
     },
     {
-      "data": { "id": "3", "name": "", "label": "Effect" },
+      "data": { "id": "3", "name": "", "label": "HandledEffect" },
       "position": { "x": 100, "y": 100 }
     }
   ],

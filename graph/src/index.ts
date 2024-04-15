@@ -3,9 +3,16 @@ import elements from './elements.json';
 
 const style: cytoscape.Stylesheet[] = [
     {
-        selector: 'node[label = "Effect"]',
+        selector: 'node[label = "HandledEffect"]',
         style: {
             'background-color': '#666',
+            'label': 'data(name)'
+        }
+    },
+    {
+        selector: 'node[label = "NotHandledEffect"]',
+        style: {
+            'background-color': '#999',
             'label': 'data(name)'
         }
     },
