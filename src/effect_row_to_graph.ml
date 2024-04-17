@@ -30,10 +30,19 @@ and add_id_to_efNameTree (tree: efNameTree) (id: int) : (efNameTreeWithId * int)
 (* efNameから名前を出力する *)
 let get_name (efName: efName) : string = match efName with
   | FunctionName (name,_,_,_) -> name
-  | EffectName (name, _, _) -> name
+  | EffectName (name, _, _,_) -> name
   | Empty -> ""
   | Root -> ""
   | Conditions _ -> ""
+
+let get_flag (efName: efName) : bool = match efName with
+  | FunctionName (_,_,_,_) -> true
+  | EffectName (_, _, _, flag) -> flag
+  | Empty -> true
+  | Root -> true
+  | Conditions _ -> true
+
+(* efNameTreeWithIdを文字列に変換する *)
 
 let get_id = function
   | LeafWithId id -> id
@@ -80,18 +89,18 @@ let rec get_last_id_of_condition (lst: efNameTreeWithId list) =
 
 (* nodeとedgeのlistに分ける *)
 (* 返り値はnode, edgeタプル *)
-let split_node_edge (tree: efNameTreeWithId) : (((int * string) * (int * int)) list * (int * int)  list) =
+let split_node_edge (tree: efNameTreeWithId) : (((int * string * bool) * (int * int)) list * (int * int)  list) =
   Printf.printf "split_node_edge: %s\n" (efNameTreeWithId_to_string tree);
   let rec loop tree node edge x y = match tree with 
     | NodeWithId (name, children, id) -> 
       let now_y = ref y in 
-      let node' = ((id, (get_name name)), (x, y)) :: node in
+      let node' = ((id, (get_name name), (get_flag name)), (x, y)) :: node in
       let edge' = List.fold_left (fun acc child -> get_edge id acc child) edge children in
       now_y := !now_y - 100;
       List.fold_left (fun (node, edge) child -> now_y := !now_y + 100; loop child node edge (x + 100) !now_y) (node', edge') children
     | ConditionWithId (condition_lst, children, id) -> 
       let now_y = ref y in 
-      let node' = ((id, ""), (x, y)) :: node in
+      let node' = ((id, "", true), (x, y)) :: node in
       (* childのidが-1の時(Leafノード)の時は選択しないようにする *)
       let edge' = List.fold_left (fun acc child -> get_edge id acc child) edge condition_lst in
       Printf.printf "edges: %s\n" (String.concat ", " (List.map (fun (from, to_) -> Printf.sprintf "(%d, %d)" from to_) edge'));
@@ -107,12 +116,12 @@ let split_node_edge (tree: efNameTreeWithId) : (((int * string) * (int * int)) l
   loop tree [] [] 100 100
 
 (* nodeをjsonに変換する *)
-let node_to_json (node: (int * string)) (position: (int * int)) = 
-  let (id, name) = node in
+let node_to_json (node: (int * string * bool)) (position: (int * int)) = 
+  let (id, name, flag) = node in
   let (x, y) = position in
   let id =  string_of_int id in
   `Assoc [ ("data", 
-    `Assoc [("id", `String id); ("name", `String name); ("label", `String "Effect")]
+    `Assoc [("id", `String id); ("name", `String name); ("label", `String (if flag then "HandledEffect" else "NotHandledEffect"))]
   );
   ("position", 
     `Assoc [("x", `Int x); ("y", `Int y)]
@@ -143,7 +152,7 @@ let pre_edges_to_json (edges: (int * int) list) =
 (* efNameTreeWithIdをjsonに変換する *)
 
 (* nodeのリストをjsonに変換する *)
-let nodes_to_json (nodes: ((int * string) * (int * int)) list) = 
+let nodes_to_json (nodes: ((int * string * bool) * (int * int)) list) = 
   `List (List.map (fun (node, position) -> node_to_json node position) nodes)
 
 (* edgeのリストをjsonに変換する *)
@@ -151,7 +160,7 @@ let edges_to_json (edges: (int * int) list) =
   `List (List.map edge_to_json (pre_edges_to_json edges))
 
 (* (nodes, edegs)をjsonに変換する *)
-let effect_row_to_json (nodes: ((int * string) * (int * int)) list) (edges: (int * int) list) = 
+let effect_row_to_json (nodes: ((int * string * bool) * (int * int)) list) (edges: (int * int) list) = 
   `Assoc [("nodes", nodes_to_json nodes); ("edges", edges_to_json edges)]
 
 (* jsonをelements.jsonに書き込み *)

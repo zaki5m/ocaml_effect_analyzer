@@ -8,16 +8,16 @@ let function_call_test =
   let result = effect_row_test file in
   assert (List.length result = 3);
   let first = List.hd result in
-  let expect_first_node = Node (Root, [Node (EffectName ("Increment", [], []), [Node (EffectName ("Increment", [], []), [])])]) in
+  let expect_first_node = Node (Root, [Node (EffectName ("Increment", [], [],false), [Node (EffectName ("Increment", [], [], false), [])])]) in
   let first = (fst first, remove_id_from_tree (snd first)) in
   assert (first = (("sum_up", 1), expect_first_node));
   let second = List.hd (List.tl result) in
   let expect_second_node = 
     Node (Root, [
-      Node (EffectName ("Increment", [], []), 
-        [Node (EffectName ("Increment", [], []), 
-          [Node (EffectName ("Increment", [], []), 
-            [Node (EffectName ("Increment", [], []), [])
+      Node (EffectName ("Increment", [], [], true), 
+        [Node (EffectName ("Increment", [], [], true), 
+          [Node (EffectName ("Increment", [], [], true), 
+            [Node (EffectName ("Increment", [], [], true), [])
             ])
           ])
         ])
@@ -29,10 +29,10 @@ let function_call_test =
   let third = List.hd (List.tl (List.tl result)) in
   let expect_third_node = 
     Node (Root, [
-      Node (EffectName ("Increment", [], []), 
-        [Node (EffectName ("Increment", [], []), 
-          [Node (EffectName ("Increment", [], []), 
-            [Node (EffectName ("Increment", [], []), [])
+      Node (EffectName ("Increment", [], [], true), 
+        [Node (EffectName ("Increment", [], [], true), 
+          [Node (EffectName ("Increment", [], [], true), 
+            [Node (EffectName ("Increment", [], [], true), [])
             ])
           ])
         ])

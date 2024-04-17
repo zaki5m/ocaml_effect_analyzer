@@ -9,8 +9,8 @@ let function_call_test =
   let first = List.hd result in
   let expect_first_node = 
     Node (Root, 
-      [Node (EffectName ("Increment", [ArgsVar ("acc", Leaf)], [ArgVar "acc"]),
-        [Node (EffectName ("Increment", [LocalVar ("tmp", [], Leaf); ArgsVar ("acc", Leaf)], [ArgVar "tmp"]), [])])
+      [Node (EffectName ("Increment", [ArgsVar ("acc", Leaf)], [ArgVar "acc"], false),
+        [Node (EffectName ("Increment", [LocalVar ("tmp", [], Leaf); ArgsVar ("acc", Leaf)], [ArgVar "tmp"], false), [])])
       ]) 
   in
   let (_, first_tree, _) = first in

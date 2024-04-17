@@ -18,7 +18,7 @@ and efNameTree_to_string (efName_tree: efNameTree) :string =
 and efName_to_string (efName: efName) :string =
   match efName with
   | FunctionName (name,handler, local_var_lst,arg_lst)  -> "(" ^ name ^ " { " ^ List.fold_left (fun str arg -> str ^ arg_to_string arg) "" arg_lst ^ " } " ^ " , [ " ^ (handlers_to_string handler) ^ " || " ^ List.fold_left (fun str a -> str ^ local_var_to_string a) "" local_var_lst ^ ")"
-  | EffectName (name, local_var_lst, arg_lst) -> name ^ " { " ^ List.fold_left (fun str arg -> str ^ arg_to_string arg) "" arg_lst ^ " } " ^ " || " ^ List.fold_left (fun str a -> str ^ local_var_to_string a) "" local_var_lst
+  | EffectName (name, local_var_lst, arg_lst, flag) -> name ^ if flag then "🧚‍♂️" else ""  ^ " { " ^ List.fold_left (fun str arg -> str ^ arg_to_string arg) "" arg_lst ^ " } " ^ " || " ^ List.fold_left (fun str a -> str ^ local_var_to_string a) "" local_var_lst
   | Conditions lst -> "Conditions: " ^ List.fold_left (fun str efname_tree -> str ^ efNameTree_to_string efname_tree) "" lst
   | Empty -> "Empty"
   | Root -> "Root"
