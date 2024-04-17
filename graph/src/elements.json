@@ -1,73 +1,73 @@
 {
   "nodes": [
     {
-      "data": { "id": "2", "name": "Close", "label": "HandledEffect" },
+      "data": { "id": "0", "name": "Close", "label": "NotHandledEffect" },
       "position": { "x": 600, "y": 300 }
     },
     {
-      "data": { "id": "19", "name": "Open", "label": "HandledEffect" },
+      "data": { "id": "17", "name": "Open", "label": "NotHandledEffect" },
       "position": { "x": 500, "y": 300 }
     },
     {
-      "data": { "id": "27", "name": "Copy", "label": "HandledEffect" },
+      "data": { "id": "25", "name": "Copy", "label": "NotHandledEffect" },
       "position": { "x": 700, "y": 300 }
     },
     {
-      "data": { "id": "12", "name": "Close", "label": "HandledEffect" },
+      "data": { "id": "10", "name": "Close", "label": "HandledEffect" },
       "position": { "x": 700, "y": 200 }
     },
     {
-      "data": { "id": "29", "name": "", "label": "HandledEffect" },
+      "data": { "id": "27", "name": "", "label": "HandledEffect" },
       "position": { "x": 600, "y": 200 }
     },
     {
-      "data": { "id": "14", "name": "Read", "label": "HandledEffect" },
+      "data": { "id": "12", "name": "Read", "label": "HandledEffect" },
       "position": { "x": 500, "y": 200 }
     },
     {
-      "data": { "id": "9", "name": "", "label": "HandledEffect" },
+      "data": { "id": "7", "name": "", "label": "HandledEffect" },
       "position": { "x": 700, "y": 100 }
     },
     {
-      "data": { "id": "10", "name": "Close", "label": "HandledEffect" },
+      "data": { "id": "8", "name": "Close", "label": "HandledEffect" },
       "position": { "x": 600, "y": 100 }
     },
     {
-      "data": { "id": "11", "name": "Write", "label": "HandledEffect" },
+      "data": { "id": "9", "name": "Write", "label": "HandledEffect" },
       "position": { "x": 500, "y": 100 }
     },
     {
-      "data": { "id": "16", "name": "", "label": "HandledEffect" },
+      "data": { "id": "14", "name": "", "label": "HandledEffect" },
       "position": { "x": 400, "y": 100 }
     },
     {
-      "data": { "id": "17", "name": "Open", "label": "HandledEffect" },
+      "data": { "id": "15", "name": "Open", "label": "NotHandledEffect" },
       "position": { "x": 300, "y": 100 }
     },
     {
-      "data": { "id": "18", "name": "", "label": "HandledEffect" },
+      "data": { "id": "16", "name": "", "label": "HandledEffect" },
       "position": { "x": 200, "y": 100 }
     },
     {
-      "data": { "id": "1", "name": "", "label": "HandledEffect" },
+      "data": { "id": "3", "name": "", "label": "HandledEffect" },
       "position": { "x": 100, "y": 100 }
     }
   ],
   "edges": [
-    { "data": { "id": "-1", "source": "19", "target": "2" } },
-    { "data": { "id": "-2", "source": "29", "target": "27" } },
-    { "data": { "id": "-3", "source": "29", "target": "12" } },
-    { "data": { "id": "-4", "source": "14", "target": "29" } },
-    { "data": { "id": "-5", "source": "9", "target": "18" } },
-    { "data": { "id": "-6", "source": "10", "target": "9" } },
-    { "data": { "id": "-7", "source": "11", "target": "10" } },
-    { "data": { "id": "-8", "source": "27", "target": "19" } },
-    { "data": { "id": "-9", "source": "12", "target": "19" } },
-    { "data": { "id": "-10", "source": "9", "target": "19" } },
-    { "data": { "id": "-11", "source": "16", "target": "14" } },
-    { "data": { "id": "-12", "source": "16", "target": "11" } },
-    { "data": { "id": "-13", "source": "17", "target": "16" } },
-    { "data": { "id": "-14", "source": "18", "target": "17" } },
-    { "data": { "id": "-15", "source": "1", "target": "18" } }
+    { "data": { "id": "-1", "source": "17", "target": "0" } },
+    { "data": { "id": "-2", "source": "27", "target": "25" } },
+    { "data": { "id": "-3", "source": "27", "target": "10" } },
+    { "data": { "id": "-4", "source": "12", "target": "27" } },
+    { "data": { "id": "-5", "source": "7", "target": "16" } },
+    { "data": { "id": "-6", "source": "8", "target": "7" } },
+    { "data": { "id": "-7", "source": "9", "target": "8" } },
+    { "data": { "id": "-8", "source": "25", "target": "17" } },
+    { "data": { "id": "-9", "source": "10", "target": "17" } },
+    { "data": { "id": "-10", "source": "7", "target": "17" } },
+    { "data": { "id": "-11", "source": "14", "target": "12" } },
+    { "data": { "id": "-12", "source": "14", "target": "9" } },
+    { "data": { "id": "-13", "source": "15", "target": "14" } },
+    { "data": { "id": "-14", "source": "16", "target": "15" } },
+    { "data": { "id": "-15", "source": "3", "target": "16" } }
   ]
 }

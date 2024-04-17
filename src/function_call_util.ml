@@ -310,6 +310,32 @@ let rec analyze_handler_serch_continue (tree: efNameTreeWithId) continuation_tre
   | RecNodeWithId id -> RecNodeWithId id
   | ConditionWithId (condition_lst, lst, id) -> ConditionWithId (List.map (fun tree -> analyze_handler_serch_continue tree continuation_tree_lst) condition_lst, (List.map (fun tree -> analyze_handler_serch_continue tree continuation_tree_lst) lst), id)
 
+(* ハンドラでNoneが処理された時に，残りの計算を繋げる処理 *)
+let rec analyze_handler_search_wiled_card (tree: efNameTreeWithId) continuation_tree_lst = match tree with
+  | LeafWithId id -> LeafWithId id
+  | NodeWithId(efName, [], id) -> NodeWithId (efName, continuation_tree_lst, id)
+  | NodeWithId(efName, lst, id) -> 
+    let lst = List.filter (fun tree -> 
+      match tree with
+      | LeafWithId _ -> false
+      | _ -> true
+       ) lst in
+    if lst = [] then 
+      NodeWithId (efName, continuation_tree_lst, id)
+    else
+      NodeWithId (efName, (List.map (fun tree -> analyze_handler_search_wiled_card tree continuation_tree_lst) lst), id)
+  | RecNodeWithId id -> RecNodeWithId id
+  | ConditionWithId (condition_lst, [], id) -> ConditionWithId (condition_lst, continuation_tree_lst, id)
+  | ConditionWithId (condition_lst, lst, id) -> ConditionWithId (List.map (fun tree -> analyze_handler_search_wiled_card tree continuation_tree_lst) condition_lst, (List.map (fun tree -> analyze_handler_search_wiled_card tree continuation_tree_lst) lst), id)
+
+(* 継続のtreeを受け取って正しく処理する関数 *)
+let analyze_handler_with_continuation tree continuation_tree flag = 
+  (* flagがtrueの場合wildeカードでのマッチではない *)
+  if flag then
+    analyze_handler_serch_continue tree continuation_tree
+  else
+    analyze_handler_search_wiled_card tree continuation_tree
+
 let rec add_continue_efNameTree handler tree = match tree with 
   | Leaf -> Leaf
   | Node (efName, lst) -> (match efName with 

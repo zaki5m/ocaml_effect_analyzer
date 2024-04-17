@@ -16,8 +16,7 @@ let analyze_handler (tree: efNameTreeWithId) (handler: efNameOfHandler list) nex
         | EffectName (name, _,_, flag) -> 
           if flag = false then
             let result = List.find_opt (fun (tmp_name, _, _) -> name = tmp_name) effect_lst in
-            (* 現在は絶対にhandleするものと仮定している *)
-            let handled_efName = change_effect_to_handled efName in
+            let handled_efName = if (result = None) then efName else change_effect_to_handled efName in
             let tmp_tree = 
               (match result with
                 | Some (_, tmp_tree, local_var_lst) -> 
@@ -30,7 +29,7 @@ let analyze_handler (tree: efNameTreeWithId) (handler: efNameOfHandler list) nex
             let (next_tree, next_id) = add_id_to_efNameTree tmp_tree !ref_next_id in
             ref_next_id := next_id;
             let new_tree = NodeWithId (handled_efName, [next_tree], id) in
-            let tmp_tree = analyze_handler_serch_continue new_tree [ret_tree_with_id] in (* 継続がreturn句のため *)
+            let tmp_tree = analyze_handler_with_continuation new_tree [ret_tree_with_id] (result != None) in (* 継続がreturn句のため *)
             tmp_tree
           else
             NodeWithId (efName, [ret_tree_with_id], id)
@@ -42,26 +41,22 @@ let analyze_handler (tree: efNameTreeWithId) (handler: efNameOfHandler list) nex
           (* tmp_tree_lstが継続 *)
           (* 実際には継続は関数が返ってbindすることもあるが，その場合は現在未考慮 *)
           let result = List.find_opt (fun (tmp_name, _, _) -> name = tmp_name) effect_lst in
-          (* 現在は絶対にhandleするものと仮定している *)
-          let handled_efName = change_effect_to_handled efName in 
-          (match result with
-          | Some (_, tmp_tree, local_var_lst) ->
-            (* let continue_tree = Node (FunctionName (" ", handler , tmp_tree_lst, []), []) in *)
+          let handled_efName = if (result = None) then efName else change_effect_to_handled efName in 
+          let tmp_tree = 
+            (match result with
+              | Some (_, tmp_tree, local_var_lst) -> 
+                tmp_tree
+              | None -> 
+                let tmp_tree = any_exist_wildcard effect_lst in
+                tmp_tree
+            )
+          in
             let continuation_tree = List.map (fun tree ->  loop tree) tmp_tree_lst in 
             let (next_tree, next_id) = add_id_to_efNameTree tmp_tree !ref_next_id in
             ref_next_id := next_id;
             let new_tree = NodeWithId (handled_efName, [next_tree], id) in
-            let tmp_tree = analyze_handler_serch_continue new_tree continuation_tree in
+            let tmp_tree = analyze_handler_with_continuation new_tree continuation_tree (result != None) in
             tmp_tree
-          | None -> 
-            let tmp_tree = any_exist_wildcard effect_lst in
-            let continuation_tree = List.map (fun tree ->  loop tree) tmp_tree_lst in 
-            let (next_tree, next_id) = add_id_to_efNameTree tmp_tree !ref_next_id in
-            ref_next_id := next_id;
-            let new_tree = NodeWithId (handled_efName, [next_tree], id) in
-            let tmp_tree = analyze_handler_serch_continue new_tree continuation_tree in
-            tmp_tree
-          )
         else
           NodeWithId (efName, List.map (fun tree -> loop tree) tmp_tree_lst, id)
       | _ -> NodeWithId (efName, (List.map (fun tree ->  loop tree) tmp_tree_lst), id)
